@@ -1,6 +1,6 @@
 # Explainable News Clustering with Ontology-Anchored Knowledge Graphs
 
-CSE 573 Semantic Web Mining — implementation repo. Full plan: [`../PLAN.md`](../PLAN.md). Proposal: [`../Project_Proposal.docx`](../Project_Proposal.docx).
+CSE 573 Semantic Web Mining — implementation repo. 
 
 ## Implementation goals
 
@@ -52,8 +52,6 @@ Three rules drive every design choice here:
   the Neo4j schema (labels, relationship types, constraints). Optional B is a
   file swap, not a rewrite.
 
-Full data flow, evaluation targets, and the 8-week schedule are in
-[`../PLAN.md`](../PLAN.md).
 
 ## Getting started
 
@@ -76,6 +74,3 @@ ui/             Streamlit dashboard (extends the course harness's ui/)
 data/cache/     .npy embedding cache (gitignored)
 ```
 
-Every module currently raises `NotImplementedError` — this is a scaffold, not a
-placeholder implementation. Fill in `swm/` per the data flow in `PLAN.md` section 3,
-then wire the `scripts/` in order.

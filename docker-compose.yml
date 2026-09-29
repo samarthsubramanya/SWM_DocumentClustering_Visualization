@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: swm
+      POSTGRES_USER: swm
+      POSTGRES_PASSWORD: swm
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/changeme
+    ports: ["7474:7474", "7687:7687"]
+    volumes: ["neo4jdata:/data"]
+
+  # Point OLLAMA_BASE_URL at the college cloud / supercomputer endpoint instead
+  # of this service once that's available; kept here for local dev only.
+  ollama:
+    image: ollama/ollama
+    ports: ["11434:11434"]
+    volumes: ["ollamadata:/root/.ollama"]
+
+volumes:
+  pgdata:
+  neo4jdata:
+  ollamadata:

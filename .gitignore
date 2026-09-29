@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+venv/
+__pycache__/
+*.pyc
+.env
+data/cache/*.npy
+data/cache/*.pkl
+*.egg-info/
+.DS_Store
+.pytest_cache/
+*.log

@@ -1,0 +1,41 @@
+# Minimal starter ontology for the 20 Newsgroups foundation.
+# Compiled 1:1 into the Neo4j schema: entity -> label, relation -> relationship type.
+entities:
+  Person:
+    descriptor: An individual named in the text (author, official, public figure).
+  Organization:
+    descriptor: A company, agency, team, or other named institution.
+  Location:
+    descriptor: A place name (city, country, region, venue).
+  Event:
+    descriptor: A named or dated occurrence (election, launch, match, conference).
+  Artifact:
+    descriptor: A product, technology, or piece of software mentioned in the text.
+  Topic:
+    descriptor: A subject or theme the document discusses, distinct from any named entity.
+
+relations:
+  affiliatedWith:
+    source: Person
+    target: Organization
+    descriptor: The person is a member of, works for, or represents the organization.
+  locatedIn:
+    source: [Organization, Event]
+    target: Location
+    descriptor: The organization or event is based in or takes place at the location.
+  participatesIn:
+    source: [Person, Organization]
+    target: Event
+    descriptor: The person or organization takes part in the event.
+  produces:
+    source: Organization
+    target: Artifact
+    descriptor: The organization makes, sells, or maintains the artifact.
+  about:
+    source: Document
+    target: Topic
+    descriptor: The document's subject matter.
+  mentions:
+    source: Document
+    target: [Person, Organization, Location, Event, Artifact]
+    descriptor: The document refers to this entity (used for every extracted entity).

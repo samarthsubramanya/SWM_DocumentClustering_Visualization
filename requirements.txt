@@ -13,6 +13,10 @@ fastapi
 uvicorn[standard]
 streamlit
 httpx
+plotly                    # UMAP scatter (UI)
+streamlit-plotly-events   # click a point -> select doc (UI)
+pyvis                     # KG subgraph view
+networkx                  # PageRank, GraphML export, entity paths
 
 # ==========================================================
 # Storage
@@ -23,12 +27,11 @@ neo4j
 # ==========================================================
 # Embeddings, clustering, dimensionality reduction
 # ==========================================================
-sentence-transformers
-scikit-learn
+sentence-transformers     # all-mpnet-base-v2, bge-base-en-v1.5
+scikit-learn              # 20NG loader, TF-IDF/LSA, k-means, agglomerative, metrics
+scipy
 umap-learn
 hdbscan
-networkx
-pyvis
 
 # ==========================================================
 # LLM structured output / ontology
@@ -41,9 +44,27 @@ pyyaml
 # ==========================================================
 pandas
 numpy
+tqdm
+
+# ==========================================================
+# Optional A — dynamic ingestion (RSS / pasted text)
+# ==========================================================
+feedparser
+
+# ==========================================================
+# Optional B — PubMed adaptation
+# ==========================================================
+biopython                 # Bio.Entrez for PubMed abstracts
+
+# ==========================================================
+# Evaluation
+# ==========================================================
+krippendorff              # inter-rater agreement for human eval
+matplotlib                # metric/ablation plots for the report
 
 # ==========================================================
 # Env / dev
 # ==========================================================
 python-dotenv
 pytest
+pytest-asyncio

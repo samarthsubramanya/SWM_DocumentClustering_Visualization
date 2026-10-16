@@ -22,6 +22,32 @@ services:
     ports: ["11434:11434"]
     volumes: ["ollamadata:/root/.ollama"]
 
+  api:
+    build: .
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: swm
+      POSTGRES_USER: swm
+      POSTGRES_PASSWORD: swm
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: changeme
+    ports: ["8000:8000"]
+    depends_on: [postgres, neo4j]
+    command: ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  ui:
+    build: .
+    environment:
+      API_BASE_URL: http://api:8000
+      STREAMLIT_SERVER_HEADLESS: "true"
+    ports: ["8501:8501"]
+    depends_on: [api]
+    command: ["streamlit", "run", "ui/streamlit_app.py",
+              "--server.address", "0.0.0.0", "--server.port", "8501"]
+
 volumes:
   pgdata:
   neo4jdata:

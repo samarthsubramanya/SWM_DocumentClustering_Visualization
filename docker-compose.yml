@@ -1,3 +1,19 @@
+# Local stack. Phase 1 pipeline scripts run on the host against postgres/neo4j/ollama;
+# api + ui are optional containers that read the same DB and the ./data cache.
+x-app-env: &app-env
+  # Container-side URL; set DOCKER_OLLAMA_BASE_URL to the college endpoint when available.
+  OLLAMA_BASE_URL: ${DOCKER_OLLAMA_BASE_URL:-http://ollama:11434}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: swm
+  POSTGRES_USER: swm
+  POSTGRES_PASSWORD: swm
+  NEO4J_URI: bolt://neo4j:7687
+  NEO4J_USER: neo4j
+  NEO4J_PASSWORD: changeme
+  SWM_RUN_ID: ${SWM_RUN_ID:-}
+
 services:
   postgres:
     image: postgres:16
@@ -7,13 +23,21 @@ services:
       POSTGRES_PASSWORD: swm
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swm -d swm"]
+      interval: 10s
+      retries: 10
 
   neo4j:
     image: neo4j:5-community
     environment:
       NEO4J_AUTH: neo4j/changeme
-    ports: ["7474:7474", "7687:7687"]
+    ports: ["7474:7474", "7687:7687"]   # 7474 = Neo4j Browser
     volumes: ["neo4jdata:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p changeme 'RETURN 1' || exit 1"]
+      interval: 10s
+      retries: 20
 
   # Point OLLAMA_BASE_URL at the college cloud / supercomputer endpoint instead
   # of this service once that's available; kept here for local dev only.
@@ -24,26 +48,22 @@ services:
 
   api:
     build: .
-    environment:
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: swm
-      POSTGRES_USER: swm
-      POSTGRES_PASSWORD: swm
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: neo4j
-      NEO4J_PASSWORD: changeme
+    environment: *app-env
     ports: ["8000:8000"]
-    depends_on: [postgres, neo4j]
+    volumes: ["./data:/app/data"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      neo4j: {condition: service_healthy}
     command: ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
   ui:
     build: .
     environment:
+      <<: *app-env
       API_BASE_URL: http://api:8000
       STREAMLIT_SERVER_HEADLESS: "true"
     ports: ["8501:8501"]
+    volumes: ["./data:/app/data"]
     depends_on: [api]
     command: ["streamlit", "run", "ui/streamlit_app.py",
               "--server.address", "0.0.0.0", "--server.port", "8501"]

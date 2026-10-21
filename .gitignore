@@ -227,3 +227,5 @@ data/cache/*.pkl
 .DS_Store
 .pytest_cache/
 *.log
+data/raw/
+data/

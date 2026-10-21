@@ -11,10 +11,9 @@ langsmith
 # ==========================================================
 fastapi
 uvicorn[standard]
-streamlit
+streamlit>=1.40            # plotly on_select + horizontal bar_chart
 httpx
-plotly                    # UMAP scatter (UI)
-streamlit-plotly-events   # click a point -> select doc (UI)
+plotly                    # UMAP scatter; click-to-select via st.plotly_chart(on_select)
 pyvis                     # KG subgraph view
 networkx                  # PageRank, GraphML export, entity paths
 

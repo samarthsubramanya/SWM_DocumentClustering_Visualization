@@ -298,7 +298,7 @@ _chat_llm = ChatOllama(
     num_predict=2048,
 
     # Text2Cypher / rationale prompts include schema and evidence.
-    num_ctx=8192,
+    num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "8192")),
 )
 
 _llm = SharedLLM(

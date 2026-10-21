@@ -74,3 +74,20 @@ ui/             Streamlit dashboard (extends the course harness's ui/)
 data/cache/     .npy embedding cache (gitignored)
 ```
 
+## Phase 1 run order (foundation)
+
+```bash
+docker compose up -d postgres neo4j          # + ollama, or point OLLAMA_BASE_URL at the college endpoint
+python scripts/01_ingest.py                  # 20NG -> documents table
+python scripts/02_embed.py                   # tfidf_lsa / mpnet / bge -> data/cache/*.npy
+python scripts/03_cluster.py                 # UMAP + HDBSCAN/k-means/agglomerative grid -> runs, doc_cluster, cluster_info
+python scripts/04_explain.py                 # evidence for every doc of the best-NMI run (--run to choose)
+python scripts/05_kg.py                      # LLM triples (30 docs/cluster) -> Neo4j + PageRank labels + GraphML
+python scripts/05_kg.py --all-docs           # optional: every doc (~60 h locally; cached, resumable)
+uvicorn src.api.app:app --port 8000          # agents (chat)
+streamlit run ui/streamlit_app.py            # dashboard
+```
+
+Each stage caches its output, so re-running one never recomputes upstream. `SWM_RUN_ID`
+pins the run used by 04/05, the UI default, and the agents. Neo4j Browser: http://localhost:7474.
+

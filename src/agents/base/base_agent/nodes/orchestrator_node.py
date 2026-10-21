@@ -76,7 +76,8 @@ User request:
 Available agents:
 
 1. cluster
-   Inspect or compare clusterings of the news corpus.
+   Inspect or compare clusterings of the news corpus: a cluster's size,
+   top terms, label and newsgroup mix, or metrics across runs (not entities).
    Examples: "show cluster 3", "compare HDBSCAN vs k-means",
    "what are the top terms of cluster 7?"
 
@@ -85,8 +86,12 @@ Available agents:
    Examples: "why is doc 42 in cluster 3?"
 
 3. kg
-   Questions answered from the ontology-anchored knowledge graph (Neo4j).
-   Examples: "which organizations appear in clusters 3 and 7?"
+   Questions about named entities (people, organizations, locations, events,
+   artifacts, topics) or their relations, answered from the knowledge graph
+   (Neo4j). Use kg whenever the question asks for entities, even if it is
+   scoped to a cluster.
+   Examples: "which organizations appear in clusters 3 and 7?",
+   "most mentioned locations in cluster 15", "who is affiliated with NASA?"
 
 4. ingest
    Add a new article (pasted text or RSS) and assign it to a cluster

@@ -4,6 +4,10 @@ x-app-env: &app-env
   # Container-side URL; set DOCKER_OLLAMA_BASE_URL to the college endpoint when available.
   OLLAMA_BASE_URL: ${DOCKER_OLLAMA_BASE_URL:-http://ollama:11434}
   OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+  LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+  LLM_BASE_URL: ${LLM_BASE_URL:-https://openai.rc.asu.edu/v1}
+  LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_MODEL: ${LLM_MODEL:-}
   POSTGRES_HOST: postgres
   POSTGRES_PORT: "5432"
   POSTGRES_DB: swm
@@ -21,7 +25,7 @@ services:
       POSTGRES_DB: swm
       POSTGRES_USER: swm
       POSTGRES_PASSWORD: swm
-    ports: ["5432:5432"]
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U swm -d swm"]

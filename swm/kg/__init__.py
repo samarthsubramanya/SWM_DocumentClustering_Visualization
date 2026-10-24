@@ -92,7 +92,7 @@ class Extraction(BaseModel):
 
 
 # Bump when the prompt or schema changes: older cached extractions are then ignored.
-EXTRACTION_VERSION = 2
+EXTRACTION_VERSION = 3  # bump whenever the prompt or ontology descriptors change
 
 
 def _prompt(onto: dict, text: str) -> str:
@@ -186,6 +186,9 @@ def extract(docs: list[dict], onto: dict, workers: int = 1) -> tuple[list[dict],
     from tqdm import tqdm
 
     extraction_cache_dir().mkdir(parents=True, exist_ok=True)
+    from swm.llm import _chat
+
+    _chat()  # build the client (and its imports) once, before the worker threads start
     with ThreadPoolExecutor(max_workers=workers) as pool:
         raws = list(tqdm(pool.map(lambda d: _extract_one(d, onto), docs), total=len(docs),
                          desc="KG extraction"))
@@ -421,13 +424,44 @@ def cluster_graph(cluster_docs, entities: list[dict], relations: list[dict], ont
     return G
 
 
+# Usenet artefacts that PageRank would otherwise surface as "topics": e-mail addresses,
+# hostnames, bare dates/years, and one-token poster names ("mathew", "lew").
+_LABEL_JUNK = re.compile(
+    r"@|\b[\w-]+\.(com|edu|org|net|gov|mil|uk|de|ca|au)\b"   # mail / host
+    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b"                         # 4/15/93
+    r"|\b(1[0-9]|20)\d\d\b|\b\d{2,4}'?s\b"                 # years, 1980's
+    r"|^[\d\W_]+$",                                          # only digits / punctuation
+    re.I,
+)
+_LABEL_STOP = {"group", "copy", "guy", "desk", "post", "posts", "posters", "thing", "people", "article"}
+
+
+def label_candidate(name: str, etype: str) -> bool:
+    """Whether an entity may appear in a cluster label (it stays in the graph either way)."""
+    n = name.strip().lower()
+    if len(n) < 3 or n in _LABEL_STOP or _LABEL_JUNK.search(n):
+        return False
+    return not (etype == "Person" and len(n.split()) < 2)  # single-token person = poster handle
+
+
 def pagerank_label(G: nx.DiGraph, top_term: str | None = None, k: int = 3) -> str:
-    """Top-k PageRank entities (+ top c-TF-IDF term) as a human-readable cluster label."""
+    """Top-k PageRank entities (+ top c-TF-IDF term) as a human-readable cluster label.
+
+    Ties are common when a cluster has few documents (every entity seen once has the same
+    score), so they break by document frequency, never by name order.
+    """
     if G.number_of_nodes() == 0:
         return top_term or ""
-    pr = nx.pagerank(G.to_undirected())
-    ranked = (G.nodes[n]["name"] for n in sorted(pr, key=pr.get, reverse=True) if G.nodes[n]["kind"] == "entity")
-    top = list(dict.fromkeys(ranked))[:k]  # same name under two types (Location/Organization) counts once
+    U = G.to_undirected()
+    pr = nx.pagerank(U)
+    def doc_freq(n):
+        return sum(1 for m in U[n] if G.nodes[m]["kind"] == "document")
+    nodes = [n for n in G if G.nodes[n]["kind"] == "entity"
+             and label_candidate(G.nodes[n]["name"], G.nodes[n].get("type", ""))]
+    nodes.sort(key=lambda n: (-round(pr[n], 9), -doc_freq(n), n))
+    top = list(dict.fromkeys(G.nodes[n]["name"] for n in nodes))[:k]  # same name under two types counts once
+    if not top:
+        return top_term or ""
     return " · ".join(top) + (f" ({top_term})" if top_term else "")
 
 

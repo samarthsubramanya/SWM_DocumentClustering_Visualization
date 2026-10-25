@@ -231,7 +231,8 @@ def rationale(doc_id: str, run_id: str, kg_entities=(), attempts: int = 3, force
     ev = row["evidence"]
     # The post may share no literal term with its cluster, so the cluster's own top terms are citable too.
     terms = list(dict.fromkeys(evidence_terms(ev, kg_entities) + ev["cluster_keywords"][:5]))
-    need = min(2, len(set(terms)))
+    # Two quotes only when the post itself gives two pieces of evidence; many posts share <= 1 term with their cluster.
+    need = min(2 if len(set(evidence_terms(ev, kg_entities))) >= 2 else 1, len(set(terms)))
     prompt = RATIONALE_PROMPT.format(
         need=need,
         terms=", ".join(dict.fromkeys(terms)) or "(none)",
@@ -251,12 +252,17 @@ def rationale(doc_id: str, run_id: str, kg_entities=(), attempts: int = 3, force
 
     from swm.llm import chat
 
+    base, feedback = prompt, ""
     for _ in range(attempts):
         try:
-            text = chat(prompt).strip()
+            text = chat(base + feedback).strip()
         except Exception:  # Ollama unreachable / transient error
             continue
-        if len(quoted_terms(text, terms)) >= need:
+        got = quoted_terms(text, terms)
+        if len(got) < need:  # temperature 0 repeats itself, so say what was wrong
+            feedback = (f"\n\nYour previous answer quoted {len(got)} of the required {need} terms. "
+                        f"Rewrite it, copying at least {need} of these exactly as written: {', '.join(terms)}.")
+        if len(got) >= need:
             db.execute(
                 "UPDATE explanations SET rationale = %s, updated_at = now() WHERE run_id = %s AND doc_id = %s",
                 (text, run_id, doc_id),

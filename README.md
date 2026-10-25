@@ -84,6 +84,7 @@ python scripts/03_cluster.py                 # UMAP + HDBSCAN/k-means/agglomerat
 python scripts/04_explain.py                 # evidence for every doc of the best-NMI run (--run to choose)
 python scripts/05_kg.py                      # LLM triples (30 docs/cluster) -> Neo4j + PageRank labels + GraphML
 python scripts/05_kg.py --all-docs           # optional: every doc (~60 h locally; cached, resumable)
+python scripts/06_eval.py --text2cypher      # KGAgent validity + execution accuracy -> eval/reports/
 uvicorn src.api.app:app --port 8000          # agents (chat)
 streamlit run ui/streamlit_app.py            # dashboard
 ```

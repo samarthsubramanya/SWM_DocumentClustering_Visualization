@@ -312,6 +312,47 @@ def load_neo4j(run_id: str, doc_clusters: dict[str, int], entities: list[dict],
         )
 
 
+# Write clauses are rejected before Neo4j sees the query; read_query also runs in a READ tx.
+WRITE_CLAUSE = re.compile(r"\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|LOAD\s+CSV|CALL)\b", re.IGNORECASE)
+# EXPLAIN notifications Neo4j raises for names that don't exist in the graph (hallucinated schema).
+SCHEMA_WARNINGS = ("UnknownLabelWarning", "UnknownRelationshipTypeWarning", "UnknownPropertyKeyWarning")
+
+
+def validate_cypher(cypher: str) -> list[str]:
+    """Problems with an LLM-written query, found without running it; [] means valid.
+
+    1. write clauses (regex), 2. syntax/semantic errors (Neo4j EXPLAIN compiles the query),
+    3. labels / relationship types / properties absent from the graph (EXPLAIN notifications).
+    """
+    from neo4j.exceptions import Neo4jError
+
+    if m := WRITE_CLAUSE.search(cypher):
+        return [f"writes to the graph ({m.group(0)}); only read queries are allowed"]
+    try:
+        with driver().session() as session:
+            summary = session.run("EXPLAIN " + cypher).consume()
+    except Neo4jError as exc:
+        return [f"invalid Cypher: {exc.message}"]
+    return [f"{n.title}: {n.description}" for n in summary.summary_notifications
+            if n.code.endswith(SCHEMA_WARNINGS)]
+
+
+def same_results(rows_a: list[dict], rows_b: list[dict]) -> bool:
+    """Execution-accuracy match: equal multisets of row values, ignoring column names, column
+    order, row order, string case and int/float representation."""
+    def norm(v):
+        if isinstance(v, (list, tuple)):
+            return "[" + ",".join(sorted(map(norm, v))) + "]"
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return repr(round(float(v), 6))
+        return str(v).strip().lower()
+
+    def key(rows):
+        return Counter(tuple(sorted(norm(v) for v in row.values())) for row in rows)
+
+    return key(rows_a) == key(rows_b)
+
+
 def read_query(cypher: str, max_rows: int = 50) -> list[dict]:
     """Run untrusted (LLM-written) Cypher in a READ transaction; Neo4j rejects writes there."""
     def work(tx):

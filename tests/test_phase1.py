@@ -55,3 +55,12 @@ def test_encoded_attachments_are_detected():
 def test_extraction_schema_forces_both_keys():
     # Optional fields let the constrained decoder emit `{}`; that emptied ~70% of extractions.
     assert set(kg.Extraction.model_json_schema()["required"]) == {"entities", "relations"}
+
+
+def test_text2cypher_result_matching_and_write_guard():
+    gold = [{"name": "nasa"}, {"name": "ibm"}]
+    assert kg.same_results([{"o.name": "IBM"}, {"x": "nasa"}], gold)       # names/case/order ignored
+    assert not kg.same_results([{"name": "nasa"}], gold)                     # missing row
+    assert kg.same_results([{"count(d)": 3}], [{"n": 3.0}])                   # int vs float
+    assert kg.WRITE_CLAUSE.search("MATCH (n) DETACH DELETE n")
+    assert not kg.WRITE_CLAUSE.search("MATCH (d:Document) RETURN d.id")

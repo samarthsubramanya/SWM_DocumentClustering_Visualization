@@ -1,0 +1,117 @@
+# Held-out questions for the KGAgent (Text2Cypher), scored by scripts/06_eval.py --text2cypher.
+#
+# Scoring is execution accuracy: the generated query's result rows must equal the gold query's
+# rows (as a multiset of values; column names and row order are ignored). Gold queries run
+# against the live graph, so they stay valid when the graph is rebuilt.
+#
+# Rules for adding questions: answers must be unambiguous (no top-k with possible ties) and
+# under 50 rows (the agent's LIMIT). Entity names in the graph are lowercase.
+# `pattern` groups the score by question type.
+
+questions:
+  - id: q01
+    pattern: count
+    question: How many documents are in the knowledge graph?
+    gold: MATCH (d:Document) RETURN count(d)
+
+  - id: q02
+    pattern: count
+    question: How many people are in the knowledge graph?
+    gold: MATCH (p:Person) RETURN count(p)
+
+  - id: q03
+    pattern: count
+    question: How many locatedIn relationships are there in the graph?
+    gold: MATCH ()-[r:locatedIn]->() RETURN count(r)
+
+  - id: q04
+    pattern: cluster-count
+    question: How many distinct organizations are mentioned in cluster 4?
+    gold: MATCH (:Document {cluster_id: 4})-[:mentions]->(o:Organization) RETURN count(DISTINCT o)
+
+  - id: q05
+    pattern: cluster-count
+    question: How many distinct people are mentioned in documents of cluster 19?
+    gold: MATCH (:Document {cluster_id: 19})-[:mentions]->(p:Person) RETURN count(DISTINCT p)
+
+  - id: q06
+    pattern: cluster-count
+    question: How many documents from cluster 7 are in the graph?
+    gold: MATCH (d:Document {cluster_id: 7}) RETURN count(d)
+
+  - id: q07
+    pattern: cluster-list
+    question: Which locations are mentioned in cluster 15?
+    gold: MATCH (:Document {cluster_id: 15})-[:mentions]->(l:Location) RETURN DISTINCT l.name
+
+  - id: q08
+    pattern: cluster-list
+    question: Which events are mentioned in cluster 12?
+    gold: MATCH (:Document {cluster_id: 12})-[:mentions]->(e:Event) RETURN DISTINCT e.name
+
+  - id: q09
+    pattern: cluster-list
+    question: What topics are the documents in cluster 6 about?
+    gold: MATCH (:Document {cluster_id: 6})-[:about]->(t:Topic) RETURN DISTINCT t.name
+
+  - id: q10
+    pattern: entity-lookup
+    question: Which clusters have documents that mention nasa?
+    gold: MATCH (d:Document)-[:mentions]->(:Organization {name: 'nasa'}) RETURN DISTINCT d.cluster_id
+
+  - id: q11
+    pattern: entity-lookup
+    question: Which documents mention ibm?
+    gold: MATCH (d:Document)-[:mentions]->(e) WHERE e.name = 'ibm' RETURN DISTINCT d.id
+
+  - id: q12
+    pattern: entity-lookup
+    question: How many documents mention israel?
+    gold: MATCH (d:Document)-[:mentions]->(e) WHERE e.name = 'israel' RETURN count(DISTINCT d)
+
+  - id: q13
+    pattern: cross-cluster
+    question: Which organizations appear in both cluster 0 and cluster 18?
+    gold: |
+      MATCH (:Document {cluster_id: 0})-[:mentions]->(o:Organization)<-[:mentions]-(:Document {cluster_id: 18})
+      RETURN DISTINCT o.name
+
+  - id: q14
+    pattern: cross-cluster
+    question: Which people are mentioned in more than one cluster?
+    gold: |
+      MATCH (d:Document)-[:mentions]->(p:Person)
+      WITH p, count(DISTINCT d.cluster_id) AS clusters WHERE clusters > 1
+      RETURN p.name
+
+  - id: q15
+    pattern: cross-cluster
+    question: Which locations are mentioned in both cluster 15 and cluster 17?
+    gold: |
+      MATCH (:Document {cluster_id: 15})-[:mentions]->(l:Location)<-[:mentions]-(:Document {cluster_id: 17})
+      RETURN DISTINCT l.name
+
+  - id: q16
+    pattern: relation
+    question: Which artifacts does microsoft produce?
+    gold: MATCH (:Organization {name: 'microsoft'})-[:produces]->(a:Artifact) RETURN a.name
+
+  - id: q17
+    pattern: relation
+    question: Which people are affiliated with the fbi?
+    gold: MATCH (p:Person)-[:affiliatedWith]->(:Organization {name: 'fbi'}) RETURN p.name
+
+  - id: q18
+    pattern: relation
+    question: Which organizations are located in israel?
+    gold: MATCH (o:Organization)-[:locatedIn]->(:Location {name: 'israel'}) RETURN o.name
+
+  - id: q19
+    pattern: relation
+    question: How many organizations produce at least one artifact?
+    gold: MATCH (o:Organization)-[:produces]->(:Artifact) RETURN count(DISTINCT o)
+
+  - id: q20
+    pattern: relation
+    question: Which events take place in a location, and where?
+    gold: MATCH (e:Event)-[:locatedIn]->(l:Location) RETURN e.name, l.name

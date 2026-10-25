@@ -41,9 +41,9 @@ class BadOutput(RuntimeError):
 
 
 def build_chat(num_predict: int = 1024, num_ctx: int | None = None, timeout: float = 180,
-               **ollama_kwargs):
-    """LangChain chat model for the configured provider. ollama_kwargs (e.g. reasoning=False)
-    are passed to ChatOllama only."""
+               model: str | None = None, **ollama_kwargs):
+    """LangChain chat model for the configured provider (model overrides LLM_MODEL / OLLAMA_MODEL,
+    e.g. for a judge panel). ollama_kwargs (e.g. reasoning=False) are passed to ChatOllama only."""
     num_ctx = num_ctx or int(os.getenv("OLLAMA_NUM_CTX", "8192"))
     if provider() == "openai":
         from langchain_openai import ChatOpenAI
@@ -58,7 +58,7 @@ def build_chat(num_predict: int = 1024, num_ctx: int | None = None, timeout: flo
             # Servers that don't know the field ignore it.
             extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
         return ChatOpenAI(
-            model=model_name(),
+            model=model or model_name(),
             base_url=base_url,
             api_key=api_key,
             temperature=0,
@@ -66,6 +66,8 @@ def build_chat(num_predict: int = 1024, num_ctx: int | None = None, timeout: flo
             timeout=timeout,
             max_retries=6,            # SDK backs off on 429 (token budget) / 5xx / connection errors
             extra_body=extra_body,
+            # low | medium | high for reasoning models (gpt-oss style); unset = server default
+            reasoning_effort=os.getenv("LLM_REASONING_EFFORT") or None,
         )
     if provider() != "ollama":
         raise ConfigError(f"Unknown LLM_PROVIDER={provider()!r}; use 'ollama' or 'openai'.")
@@ -73,7 +75,7 @@ def build_chat(num_predict: int = 1024, num_ctx: int | None = None, timeout: flo
     from langchain_ollama import ChatOllama
 
     return ChatOllama(
-        model=model_name(),
+        model=model or model_name(),
         base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=0,
         num_ctx=num_ctx,
@@ -84,19 +86,18 @@ def build_chat(num_predict: int = 1024, num_ctx: int | None = None, timeout: flo
     )
 
 
-_CHAT = None
+_CHATS: dict = {}
 _CHAT_LOCK = threading.Lock()
 
 
-def _chat():
-    """Shared client, built once. The lock matters: KG extraction calls this from many threads
-    at once, and concurrent first imports of httpx/openai fail ('partially initialized module')."""
-    global _CHAT
-    if _CHAT is None:
+def _chat(model: str | None = None):
+    """Shared client per model, built once. The lock matters: KG extraction calls this from many
+    threads at once, and concurrent first imports of httpx/openai fail ('partially initialized module')."""
+    if model not in _CHATS:
         with _CHAT_LOCK:
-            if _CHAT is None:
-                _CHAT = build_chat(num_predict=1024)
-    return _CHAT
+            if model not in _CHATS:
+                _CHATS[model] = build_chat(num_predict=1024, model=model)
+    return _CHATS[model]
 
 
 def chat(prompt: str) -> str:
@@ -120,13 +121,13 @@ def _error_classes() -> tuple[tuple, tuple]:
     return (httpx.HTTPError, ConnectionError, ResponseError), ()
 
 
-def structured(prompt: str, schema, attempts: int = 3):
+def structured(prompt: str, schema, attempts: int = 3, model: str | None = None):
     """Pydantic-structured output. Retries only transient errors (down, overloaded, rate-limited,
     timeout); raises ConfigError for bad key/model/request, BadOutput for invalid output, and
     RuntimeError when the endpoint stays unreachable."""
     method = os.getenv("LLM_STRUCTURED_METHOD") or None  # e.g. json_schema | function_calling | json_mode
     kwargs = {"method": method} if method else {}
-    llm = _chat().with_structured_output(schema, **kwargs)
+    llm = _chat(model).with_structured_output(schema, **kwargs)
     transient, fatal = _error_classes()
     error: Exception | None = None
     for attempt in range(attempts):

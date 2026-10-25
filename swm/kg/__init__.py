@@ -153,14 +153,19 @@ def validate(raw: dict, onto: dict, doc_id: str) -> tuple[list[dict], list[dict]
 def extraction_cache_dir() -> Path:
     from swm.llm import model_name
 
-    return CACHE / "kg" / f"{re.sub(r'[^\w.-]', '_', model_name())}-v{EXTRACTION_VERSION}"
+    model = re.sub(r"[^\w.-]", "_", model_name())
+    return CACHE / "kg" / f"{model}-v{EXTRACTION_VERSION}"
+
+
+def cache_path(doc_id: str) -> Path:
+    return extraction_cache_dir() / (re.sub(r"[^\w.-]", "_", doc_id) + ".json")
 
 
 def _extract_one(doc: dict, onto: dict) -> dict | None:
     """Cached raw extraction for one doc. None = Ollama unreachable (not cached, retried next run)."""
     from swm.llm import BadOutput, structured
 
-    path = extraction_cache_dir() / (re.sub(r"[^\w.-]", "_", doc["id"]) + ".json")
+    path = cache_path(doc["id"])
     if path.exists():
         return json.loads(path.read_text())
     try:
@@ -193,6 +198,16 @@ def extract(docs: list[dict], onto: dict, workers: int = 1) -> tuple[list[dict],
         raws = list(tqdm(pool.map(lambda d: _extract_one(d, onto), docs), total=len(docs),
                          desc="KG extraction"))
 
+    return _aggregate(docs, raws, onto)
+
+
+def cached_extract(docs: list[dict], onto: dict) -> tuple[list[dict], list[dict], dict]:
+    """extract() from the cache only: never calls the LLM; uncached docs count as unreachable_docs."""
+    raws = [json.loads(p.read_text()) if (p := cache_path(d["id"])).exists() else None for d in docs]
+    return _aggregate(docs, raws, onto)
+
+
+def _aggregate(docs: list[dict], raws: list, onto: dict) -> tuple[list[dict], list[dict], dict]:
     entities, relations, stats = [], [], Counter()
     for d, raw in zip(docs, raws):
         if raw is None:

@@ -71,6 +71,8 @@ def connect() -> psycopg.Connection:
         user=os.getenv("POSTGRES_USER", "swm"),
         password=os.getenv("POSTGRES_PASSWORD", "swm"),
         row_factory=dict_row,
+        options=os.getenv("POSTGRES_OPTIONS") or None,  # Neon + old libpq: "endpoint=<ep-id>" (no SNI)
+        prepare_threshold=None,  # pgbouncer-style poolers (Neon -pooler hosts) reject server-side prepared statements
     )
 
 

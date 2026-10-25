@@ -17,6 +17,9 @@ N_TERMS = 15
 # Contraction fragments ("don't" -> "don") and email-domain tokens are noise as cluster evidence.
 STOP_WORDS = list(ENGLISH_STOP_WORDS | {
     "don", "doesn", "didn", "isn", "wasn", "aren", "won", "ve", "ll", "edu", "com",
+    # Usenet filler: topical-sounding to c-TF-IDF in small clusters, but explains nothing.
+    "just", "like", "know", "think", "does", "good", "really", "say", "said", "going", "thing",
+    "got", "want", "need", "make", "lot", "better", "im", "yes", "ok", "thanks", "anybody", "anyone",
 })
 
 
@@ -143,20 +146,23 @@ def evidence(doc_id: str, run_id: str) -> dict:
 # Rationale
 # ==========================================================
 
-RATIONALE_PROMPT = """You explain why a news document was placed in a cluster.
-Use ONLY the evidence below; do not add facts that are not in it.
-Write exactly 3 sentences. Quote at least {need} of these evidence terms verbatim: {terms}.
-A margin below 0.05 means the assignment is borderline; say so instead of calling it strong.
+RATIONALE_PROMPT = """You explain why a news-group post was placed in a cluster. Write exactly 3 sentences:
+1. What the post is about, in your own words, from the post text.
+2. How that matches the cluster's theme (its top terms and nearest posts). If the match is weak, say so.
+3. What the embedding evidence adds (centroid cosine and margin). A margin below 0.05 is borderline.
+Quote at least {need} of these terms verbatim: {terms}.
+Use only the facts below and the post itself. Never present a generic word (e.g. "just", "like") as the reason,
+and never justify the placement by similarity numbers alone.
 
 Cluster {cluster_id}{label}: top terms {keywords}
 Evidence:
-- cluster terms found in the document (term x count): {hits}
+- cluster terms found in the post (term x count): {hits}
 - cosine to own centroid {own}; runner-up cluster {runner} at {runner_sim}; margin {margin}
 - membership probability: {prob}
-- nearest exemplar documents in the cluster: {exemplars}
+- nearest posts in the cluster: {exemplars}
 - knowledge-graph entities mentioned: {entities}
 
-Document (truncated):
+Post (truncated):
 \"\"\"{text}\"\"\"
 """
 
@@ -193,6 +199,14 @@ def cached_rationale(doc_id: str, run_id: str) -> str | None:
     return rows[0]["rationale"] if rows else None
 
 
+def _exemplar_snippets(exemplars: list[dict]) -> str:
+    """Opening of each nearest post, so the LLM sees what the cluster's posts say (ids mean nothing to it)."""
+    if not exemplars:
+        return "none"
+    rows = db.query("SELECT id, text FROM documents WHERE id = ANY(%s)", ([e["doc_id"] for e in exemplars],))
+    return " | ".join('"' + " ".join(r["text"].split())[:150] + '"' for r in rows) or "none"
+
+
 def rationale(doc_id: str, run_id: str, kg_entities=(), attempts: int = 3, force: bool = False) -> str:
     """LLM rationale that must quote >=2 evidence terms; regenerate on failure.
 
@@ -215,7 +229,8 @@ def rationale(doc_id: str, run_id: str, kg_entities=(), attempts: int = 3, force
         return row["rationale"]
 
     ev = row["evidence"]
-    terms = evidence_terms(ev, kg_entities)
+    # The post may share no literal term with its cluster, so the cluster's own top terms are citable too.
+    terms = list(dict.fromkeys(evidence_terms(ev, kg_entities) + ev["cluster_keywords"][:5]))
     need = min(2, len(set(terms)))
     prompt = RATIONALE_PROMPT.format(
         need=need,
@@ -229,7 +244,7 @@ def rationale(doc_id: str, run_id: str, kg_entities=(), attempts: int = 3, force
         runner_sim=ev["runner_up_sim"],
         margin=ev["margin"],
         prob=ev["membership_prob"],
-        exemplars=", ".join(e["doc_id"] for e in ev["exemplars"]) or "none",
+        exemplars=_exemplar_snippets(ev["exemplars"]),
         entities=", ".join(kg_entities) or "none",
         text=row["text"][:1500],
     )

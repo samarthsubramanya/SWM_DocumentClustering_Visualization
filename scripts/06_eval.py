@@ -102,15 +102,26 @@ def export(args) -> None:
         print(f"WARNING: {stats['unreachable_docs']} of {len(docs)} docs have no cached extraction (run 05_kg.py).")
     bundle["triples"] = [{**t, "text": text_of[t["doc_id"]]} for t in ev.sample(relations, args.n_triples, args.seed)]
 
-    # --- label preference: KG PageRank label vs c-TF-IDF top terms, 5 central docs per cluster
+    # --- label preference: KG PageRank entities (without the c-TF-IDF term it carries) vs c-TF-IDF top
+    # terms, and PageRank vs plain degree on the same per-cluster graph (GraphML from 05_kg)
+    import networkx as nx
+
     samples = {}
     for r in kg.representative_docs(run_id, 5):
         samples.setdefault(r["cluster_id"], []).append(" ".join(r["text"].split())[:400])
-    bundle["clusters"] = [
-        {"cluster_id": c, "kg_label": i["label"], "ctfidf_label": ", ".join(t for t, _ in i["keywords"][:3]),
-         "samples": samples.get(c, [])}
-        for c, i in sorted(info.items()) if i["label"] and samples.get(c)]
-    if not bundle["clusters"]:
+    clusters = []
+    for c, i in sorted(info.items()):
+        if not (i["label"] and samples.get(c)):
+            continue
+        gpath = kg.graphml_path(run_id, c)
+        degree = kg.degree_label(nx.read_graphml(gpath)) if gpath.exists() else None
+        kg_label = kg.label_entities(i["label"])
+        clusters.append({"cluster_id": c, "kg_label": kg_label, "degree_label": degree,
+                         "ctfidf_label": ", ".join(t for t, _ in i["keywords"][:3]),
+                         "pagerank_degree_overlap": None if degree is None else ev.label_overlap(kg_label, degree),
+                         "samples": samples[c]})
+    bundle["clusters"] = clusters
+    if not clusters:
         print("WARNING: no KG cluster labels (run 05_kg.py); label preference skipped.")
 
     (args.out / "bundle.json").write_text(json.dumps(bundle, indent=1, default=str))
@@ -143,12 +154,12 @@ def run(args) -> None:
                 pass  # the model answered, which is all this probes
 
     if "faithfulness" in only and bundle["faithfulness_items"]:
-        from swm.represent import encode_texts
+        from swm.represent import encode_docs
 
         C = np.load(args.bundle / "centroids.npy")
         cids = np.load(args.bundle / "centroid_ids.npy")
         report["faithfulness"] = ev.faithfulness(
-            bundle["faithfulness_items"], cids, C, lambda t: encode_texts(t, bundle["embedding"]),
+            bundle["faithfulness_items"], cids, C, lambda t: encode_docs(t, bundle["embedding"]),
             draws=args.random_draws, seed=bundle["seed"])
 
     if "plausibility" in only:
@@ -174,13 +185,26 @@ def run(args) -> None:
             for k, t in enumerate(bundle["triples"])]
 
     if "labels" in only and bundle["clusters"]:
-        wins, per = [], {}
-        for m in judges:
-            jobs = [(c["cluster_id"], p, first) for c in bundle["clusters"] for p, first in ev.label_prompts(c)]
-            outs = ev.judge_all(m, "label", [p for _, p, _ in jobs], ev.LabelChoice, args.workers)
-            per[m] = [(o["better"] == "A") == (first == "kg") for (_, _, first), o in zip(jobs, outs) if o]
-            wins += per[m]
-        report["labels"] = ev.summarize_labels(wins, len(bundle["clusters"]), per)
+        report["labels"] = {}
+        for comparison in ev.LABEL_PAIRS:
+            wins, per = [], {}
+            for m in judges:
+                jobs = [(c["cluster_id"], pr, first) for c in bundle["clusters"]
+                        for pr, first in ev.label_prompts(c, comparison)]
+                if not jobs:
+                    continue
+                outs = ev.judge_all(m, f"label-{comparison}", [pr for _, pr, _ in jobs], ev.LabelChoice, args.workers)
+                per[m] = [(o["better"] == "A") == first for (_, _, first), o in zip(jobs, outs) if o]
+                wins += per[m]
+            n = sum(1 for c in bundle["clusters"] if ev.label_prompts(c, comparison))
+            report["labels"][comparison] = ev.summarize_labels(wins, n, per)
+        overlaps = [c["pagerank_degree_overlap"] for c in bundle["clusters"] if c.get("pagerank_degree_overlap") is not None]
+        report["labels"]["pagerank_degree_overlap_mean"] = float(np.mean(overlaps)) if overlaps else None
+
+    # multi-seed clustering stability, if 03_cluster --seeds wrote a report
+    seed_reports = sorted(REPORTS.glob("clustering-seeds-*.json"))
+    if seed_reports:
+        report["clustering_seeds"] = json.loads(seed_reports[-1].read_text())
 
     report["targets"] = ev.check_targets(report)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -192,7 +216,12 @@ def run(args) -> None:
 
 
 def eval_text2cypher(questions_path: Path) -> dict:
+    import asyncio
+
+    import yaml
+
     from src.agents.kg_agent import MAX_ROWS, text2cypher
+    from swm import kg
 
     questions = yaml.safe_load(questions_path.read_text())["questions"]
     results = []
@@ -247,20 +276,26 @@ def text2cypher(args) -> None:
 
 def markdown(r: dict) -> str:
     def f(v):
-        return "n/a" if v is None else f"{v:.3f}"
+        return "n/a" if v is None else v if isinstance(v, str) else f"{v:.3f}"
 
     out = [f"# Phase 1 evaluation: {r['run_id']}", "",
            f"Judges (LLM stand-in for human raters): {', '.join(r['judges']) or 'none'}", "",
            "## Targets (PLAN.md section 5)", "", "| metric | value | target | |", "|---|---|---|---|"]
     out += [f"| {k} | {f(t['value'])} | >= {t['target']} | {'n/a' if t['pass'] is None else 'PASS' if t['pass'] else 'FAIL'} |"
             for k, t in r["targets"].items()]
-    out += ["", "## Clustering runs", "", "| run | NMI | ARI | purity | silhouette | noise |", "|---|---|---|---|---|---|"]
-    out += [f"| {k} | {f(m.get('nmi'))} | {f(m.get('ari'))} | {f(m.get('purity'))} | {f(m.get('silhouette'))} | "
-            f"{f(m.get('noise_rate'))} |" for k, m in r["clustering"].items()]
+    out += ["", "## Clustering runs", "", "| run | NMI | ARI | NMI core | NMI reassigned | purity | silhouette | DBCV | noise |",
+            "|---|---|---|---|---|---|---|---|---|"]
+    out += [f"| {k} | {f(m.get('nmi'))} | {f(m.get('ari'))} | {f(m.get('nmi_core'))} | {f(m.get('nmi_assigned'))} | "
+            f"{f(m.get('purity'))} | {f(m.get('silhouette'))} | {f(m.get('dbcv'))} | {f(m.get('noise_rate'))} |"
+            for k, m in r["clustering"].items()]
     if fa := r.get("faithfulness"):
         out += ["", "## Faithfulness (delete cited terms vs equal number of random terms)", "",
-                f"- docs: {fa['n']}", f"- centroid-margin drop: cited {f(fa['margin_drop_cited'])} vs random "
-                f"{f(fa['margin_drop_random'])} (ratio {f(fa['margin_ratio'])})",
+                f"- docs: {fa['n']} (skipped {fa.get('skipped', 0)}); tokens deleted per doc {f(fa.get('tokens_deleted_mean'))}, "
+                "random deletions matched on token count",
+                f"- centroid-margin drop: cited {f(fa['margin_drop_cited'])} vs random "
+                f"{f(fa['margin_drop_random'])} (ratio {f(fa['margin_ratio'])}, 95% CI {fa.get('margin_ratio_ci95')}, "
+                f"Wilcoxon p {fa.get('wilcoxon_p_cited_greater')})",
+                f"- median per-doc difference (cited - random margin drop): {f(fa.get('margin_drop_diff_median'))}",
                 f"- own-centroid cosine drop: cited {f(fa['sim_drop_cited'])} vs random {f(fa['sim_drop_random'])} "
                 f"(ratio {f(fa['sim_ratio'])})", f"- docs where cited hurts more: {f(fa['frac_cited_hurts_more'])}",
                 f"- assignment flips (margin < 0): cited {f(fa['assignment_flips_cited'])} vs random "
@@ -276,8 +311,17 @@ def markdown(r: dict) -> str:
     out += ["", "## KG extraction", "", f"- ontology conformance {f(k['ontology_conformance'])}; entity duplicate rate "
             f"{f(k['duplicate_rate'])}; {k['n_relations']} relations from {k['docs']} docs; stats {k['stats']}"]
     if lab := r.get("labels"):
-        out += ["", "## Cluster labels: KG (PageRank) vs c-TF-IDF", "", f"- KG label preferred {f(lab['kg_preferred'])} "
-                f"over {lab['n_clusters']} clusters (both presentation orders); by judge {lab['kg_preferred_by_judge']}"]
+        out += ["", "## Cluster labels (pairwise, both presentation orders)", ""]
+        for comparison, v in lab.items():
+            if isinstance(v, dict):
+                out.append(f"- {comparison}: tested label preferred {f(v['preferred'])} over {v['n_clusters']} clusters "
+                           f"({v['n_judgments']} judgments); by judge {v['preferred_by_judge']}")
+        out.append(f"- PageRank vs degree label overlap (Jaccard): {f(lab.get('pagerank_degree_overlap_mean'))}")
+    if cs := r.get("clustering_seeds"):
+        out += ["", f"## Clustering stability over seeds {cs['seeds']}", "", "| run | NMI | ARI | DBCV |", "|---|---|---|---|"]
+        for run_id, m in cs["runs"].items():
+            g = lambda k: f"{m[k]['mean']:.3f} ± {m[k]['std']:.3f}" if k in m else "n/a"
+            out.append(f"| {run_id} | {g('nmi')} | {g('ari')} | {g('dbcv')} |")
     return "\n".join(out) + "\n"
 
 

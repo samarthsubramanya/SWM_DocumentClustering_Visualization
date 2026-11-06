@@ -32,6 +32,8 @@ if __name__ == "__main__":
     p.add_argument("--ontology", default=str(kg.DEFAULT_ONTOLOGY))
     p.add_argument("--workers", type=int, default=1,
                    help="concurrent LLM requests; match OLLAMA_NUM_PARALLEL on the server")
+    p.add_argument("--extract-only", action="store_true",
+                   help="extract + report conformance, but leave Neo4j and labels alone (LLM ablation)")
     io = p.add_mutually_exclusive_group()
     io.add_argument("--export-docs", type=Path, metavar="JSONL",
                     help="write the selected docs to JSONL and exit (for offline extraction)")
@@ -43,7 +45,10 @@ if __name__ == "__main__":
     def report(stats: dict) -> None:
         kept = stats.get("entities", 0) + stats.get("relations", 0)
         total = kept + stats.get("rejected", 0)
-        print(f"Extraction: {stats}; ontology conformance {kept / max(total, 1):.3f}")
+        print(f"Extraction: { {k: v for k, v in stats.items() if k != 'rejected_by_reason'} }; "
+              f"ontology conformance {kept / max(total, 1):.3f}")
+        for reason, n in (stats.get("rejected_by_reason") or {}).items():
+            print(f"  rejected  {n:6d}  {reason}")
         if stats.get("unreachable_docs"):
             print(f"WARNING: {stats['unreachable_docs']} docs skipped (Ollama unreachable); rerun to fill them in.")
 
@@ -67,6 +72,15 @@ if __name__ == "__main__":
     print(f"Extracting from {len(docs)} documents of {run_id}.")
     entities, relations, stats = kg.extract(docs, onto, args.workers)
     report(stats)
+    if args.extract_only:
+        n_entities, _ = kg.normalize(entities, relations)
+        out = ROOT / "eval" / "reports" / f"kg-extract-{kg.extraction_cache_dir().name}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        kept = stats.get("entities", 0) + stats.get("relations", 0)
+        out.write_text(json.dumps({"model_cache": kg.extraction_cache_dir().name, "run_id": run_id, "docs": len(docs),
+                                   "stats": stats, "ontology_conformance": kept / max(kept + stats.get("rejected", 0), 1),
+                                   "entities_after_normalize": len(n_entities)}, indent=2))
+        raise SystemExit(f"Extraction report: {out} (Neo4j and labels unchanged)")
 
     entities, relations = kg.normalize(entities, relations)
     kg.compile_schema(onto)

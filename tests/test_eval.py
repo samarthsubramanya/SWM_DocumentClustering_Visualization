@@ -46,13 +46,35 @@ def test_alpha_and_summaries():
     s = ev.summarize_plausibility({"a": [{"score": 4}, {"score": 9}, None], "b": [{"score": 3}, {"score": 4}, None]})
     assert s["invalid_outputs"] == 2 and abs(s["mean"] - np.mean([4, 5, 3, 4])) < 1e-9
     assert ev.summarize_triples({"a": [{"correct": True}, {"correct": False}, None]})["precision"] == 0.5
-    assert ev.summarize_labels([True, True, False, True], 2, {})["kg_preferred"] == 0.75
+    assert ev.summarize_labels([True, True, False, True], 2, {})["preferred"] == 0.75
 
 
 def test_label_prompts_cover_both_orders():
     c = {"kg_label": "nasa", "ctfidf_label": "space, orbit", "samples": ["a", "b"]}
     (p1, f1), (p2, f2) = ev.label_prompts(c)
-    assert (f1, f2) == ("kg", "ctfidf") and "Label A: nasa" in p1 and "Label A: space, orbit" in p2
+    assert (f1, f2) == (True, False) and "Label A: nasa" in p1 and "Label A: space, orbit" in p2
+    assert ev.label_prompts({**c, "degree_label": "nasa"}, "pagerank_vs_degree") == []   # identical: nothing to judge
+
+
+def test_random_terms_match_token_count():
+    import random
+    text = "rocket rocket orbit launch moon crater lander fuel engine thrust"
+    r = ev.random_terms(text, 3, ["rocket", "orbit"], random.Random(0))
+    assert r and sum(ev.occurrences(text, w) for w in r) == 3 and not {"rocket", "orbit"} & set(r)
+    assert ev.random_terms("rocket orbit", 5, ["rocket"], random.Random(0)) == []
+
+
+def test_label_helpers():
+    import networkx as nx
+    assert kg.label_entities("nasa · esa · orbit (space)") == "nasa · esa · orbit"
+    assert ev.label_overlap("a · b", "b · c") == 1 / 3
+    G = nx.DiGraph()
+    for d, ents in {"d1": ["nasa", "esa"], "d2": ["nasa"]}.items():
+        G.add_node(d, kind="document", name=d)
+        for e in ents:
+            G.add_node(e, kind="entity", type="Organization", name=e)
+            G.add_edge(d, e)
+    assert kg.degree_label(G, k=1) == "nasa"
 
 
 def test_duplicate_rate_and_targets():

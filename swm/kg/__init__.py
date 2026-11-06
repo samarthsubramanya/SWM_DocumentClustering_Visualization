@@ -122,30 +122,46 @@ def _clean(s) -> str:
     return " ".join(str(s or "").split())
 
 
-def validate(raw: dict, onto: dict, doc_id: str) -> tuple[list[dict], list[dict], int]:
-    """Keep only ontology-conformant entities and relations. Returns (entities, relations, n_rejected)."""
+def validate(raw: dict, onto: dict, doc_id: str, reasons: Counter | None = None
+             ) -> tuple[list[dict], list[dict], int]:
+    """Keep only ontology-conformant entities and relations. Returns (entities, relations, n_rejected).
+    reasons, when given, counts why each item was rejected (for the conformance analysis)."""
+    why = reasons if reasons is not None else Counter()
     linkable = set(doc_relations(onto))  # types a Document can point to
     rels = entity_relations(onto)
     ents: dict[str, tuple[str, str]] = {}
     rejected = 0
     for e in raw.get("entities", []):
-        name = _clean(e.get("name"))
-        if (e.get("type") in onto["entities"] and e.get("type") in linkable
-                and 1 < len(name) <= 80 and name.lower() not in ENGLISH_STOP_WORDS):
-            ents[name.lower()] = (name, e["type"])
+        name, etype = _clean(e.get("name")), e.get("type")
+        if etype not in onto["entities"]:
+            why["entity: type not in ontology"] += 1
+        elif etype not in linkable:
+            why["entity: type not linkable to a document"] += 1
+        elif not 1 < len(name) <= 80:
+            why["entity: empty or over-long name"] += 1
+        elif name.lower() in ENGLISH_STOP_WORDS:
+            why["entity: stop word / pronoun"] += 1
         else:
-            rejected += 1
+            ents[name.lower()] = (name, etype)
+            continue
+        rejected += 1
 
     relations = []
     for r in raw.get("relations", []):
         spec = rels.get(r.get("relation"))
         s = ents.get(_clean(r.get("source")).lower())
         t = ents.get(_clean(r.get("target")).lower())
-        if spec and s and t and s[1] in spec["source"] and t[1] in spec["target"]:
+        if not spec:
+            why["relation: not in ontology"] += 1
+        elif not (s and t):
+            why["relation: endpoint not a kept entity"] += 1
+        elif not (s[1] in spec["source"] and t[1] in spec["target"]):
+            why["relation: wrong source/target type"] += 1
+        else:
             relations.append({"source": s[0], "source_type": s[1], "relation": r["relation"],
                               "target": t[0], "target_type": t[1], "doc_id": doc_id})
-        else:
-            rejected += 1
+            continue
+        rejected += 1
     entities = [{"name": n, "type": t, "doc_id": doc_id} for n, t in ents.values()]
     return entities, relations, rejected
 
@@ -208,7 +224,7 @@ def cached_extract(docs: list[dict], onto: dict) -> tuple[list[dict], list[dict]
 
 
 def _aggregate(docs: list[dict], raws: list, onto: dict) -> tuple[list[dict], list[dict], dict]:
-    entities, relations, stats = [], [], Counter()
+    entities, relations, stats, reasons = [], [], Counter(), Counter()
     for d, raw in zip(docs, raws):
         if raw is None:
             stats["unreachable_docs"] += 1
@@ -216,13 +232,16 @@ def _aggregate(docs: list[dict], raws: list, onto: dict) -> tuple[list[dict], li
         if raw.get("failed"):
             stats["failed_docs"] += 1
             continue
-        e, r, rejected = validate(raw, onto, d["id"])
+        e, r, rejected = validate(raw, onto, d["id"], reasons)
         entities += e
         relations += r
         stats["entities"] += len(e)
         stats["relations"] += len(r)
         stats["rejected"] += rejected
-    return entities, relations, dict(stats)
+    out = dict(stats)
+    if reasons:
+        out["rejected_by_reason"] = dict(reasons.most_common())
+    return entities, relations, out
 
 
 # ==========================================================
@@ -519,6 +538,20 @@ def pagerank_label(G: nx.DiGraph, top_term: str | None = None, k: int = 3) -> st
     if not top:
         return top_term or ""
     return " · ".join(top) + (f" ({top_term})" if top_term else "")
+
+
+def degree_label(G: nx.DiGraph, k: int = 3) -> str:
+    """Ablation baseline for pagerank_label: top-k entities by plain degree (same filter, no term)."""
+    U = G.to_undirected()
+    nodes = [n for n in G if G.nodes[n].get("kind") == "entity"
+             and label_candidate(G.nodes[n]["name"], G.nodes[n].get("type", ""))]
+    nodes.sort(key=lambda n: (-U.degree(n), n))
+    return " · ".join(list(dict.fromkeys(G.nodes[n]["name"] for n in nodes))[:k])
+
+
+def label_entities(label: str) -> str:
+    """A pagerank_label without its trailing '(c-TF-IDF term)', so label comparisons are fair."""
+    return re.sub(r"\s*\([^()]*\)\s*$", "", label or "").strip()
 
 
 def graphml_path(run_id: str, cluster_id: int) -> Path:

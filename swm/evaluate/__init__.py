@@ -58,11 +58,39 @@ def delete_terms(text: str, terms) -> str:
     return re.sub(r"\b(?:" + "|".join(map(re.escape, terms)) + r")\b", " ", text, flags=re.I)
 
 
-def random_terms(text: str, k: int, exclude, rng: random.Random) -> list[str]:
-    """k distinct non-stopword words of the visible text, other than the cited ones."""
+def occurrences(text: str, term: str) -> int:
+    return len(re.findall(rf"\b{re.escape(term)}\b", text, re.I))
+
+
+def random_terms(text: str, n_tokens: int, exclude, rng: random.Random) -> list[str]:
+    """Random non-stopword words of the visible text, other than the cited ones, whose
+    occurrences add up to exactly n_tokens. Matching tokens (not distinct words) matters:
+    cited terms are cluster keywords and often occur several times, so deleting k random
+    words would remove less text and inflate the cited/random ratio. [] if no exact match."""
     skip = set(STOP_WORDS) | {t.lower() for t in exclude}
-    vocab = sorted({w.lower() for w in re.findall(TOKEN_PATTERN, text[:TEXT_CAP])} - skip)
-    return rng.sample(vocab, k) if len(vocab) >= k else []
+    vocab = sorted({w.lower() for w in re.findall(TOKEN_PATTERN, text)} - skip)
+    rng.shuffle(vocab)
+    picked, left = [], n_tokens
+    for w in vocab:
+        c = occurrences(text, w)
+        if 0 < c <= left:
+            picked.append(w)
+            left -= c
+            if left == 0:
+                return picked
+    return []
+
+
+def bootstrap_ratio_ci(a: np.ndarray, b: np.ndarray, n: int = 2000, seed: int = 42) -> tuple[float, float] | None:
+    """95% bootstrap CI (docs resampled) for mean(a) / mean(b)."""
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(a), size=(n, len(a)))
+    num, den = a[idx].mean(axis=1), b[idx].mean(axis=1)
+    ok = den > 0
+    if ok.mean() < 0.95:
+        return None
+    r = num[ok] / den[ok]
+    return float(np.percentile(r, 2.5)), float(np.percentile(r, 97.5))
 
 
 def _margin(E: np.ndarray, C: np.ndarray, own: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -74,17 +102,27 @@ def _margin(E: np.ndarray, C: np.ndarray, own: np.ndarray) -> tuple[np.ndarray, 
 
 
 def faithfulness(items: list[dict], cids, C, encode: Callable, draws: int = 3, seed: int = 42) -> dict:
-    """items: {doc_id, text, cluster_id, cited}. encode(texts) -> unit-norm embeddings of the
-    run's embedding model. Per doc: drop in own-centroid cosine and in centroid margin after
-    deleting the cited terms vs. an equal number of random terms (mean over `draws`)."""
+    """items: {doc_id, text, cluster_id, cited}. encode(texts) -> unit-norm embeddings with the
+    run's document encoder. Per doc: drop in own-centroid cosine and in centroid margin after
+    deleting every occurrence of the cited terms vs deleting random words with the SAME number
+    of occurrences (mean over `draws` random draws).
+
+    What this tests: whether the evidence an explanation cites (the cluster's c-TF-IDF terms in
+    the post) moves the post towards its cluster in embedding space, under the nearest-centroid
+    rule the margin uses. For k-means/HDBSCAN-on-UMAP/agglomerative runs that rule is a proxy
+    for the algorithm's own assignment; report it as such."""
+    from scipy.stats import wilcoxon
+
     rng = random.Random(seed)
     cids = list(map(int, cids))
-    kept, variants = [], []
+    kept, variants, tokens = [], [], []
     for it in items:
         text = it["text"][:TEXT_CAP]
-        rnd = [random_terms(text, len(it["cited"]), it["cited"], rng) for _ in range(draws)]
-        if it["cited"] and all(rnd):
+        n_tok = sum(occurrences(text, t) for t in it["cited"])
+        rnd = [random_terms(text, n_tok, it["cited"], rng) for _ in range(draws)]
+        if it["cited"] and n_tok and all(rnd):
             kept.append(it)
+            tokens.append(n_tok)
             variants += [text, delete_terms(text, it["cited"])] + [delete_terms(text, r) for r in rnd]
     if not kept:
         return {"n": 0, "per_doc": []}
@@ -99,17 +137,25 @@ def faithfulness(items: list[dict], cids, C, encode: Callable, draws: int = 3, s
     def ratio(a, b):
         return float(a.mean() / b.mean()) if b.mean() > 0 else None
 
+    try:
+        p_value = float(wilcoxon(d_mar_cited, d_mar_rand, alternative="greater").pvalue)
+    except ValueError:  # all differences zero
+        p_value = None
     return {
-        "n": len(kept),
+        "n": len(kept), "skipped": len(items) - len(kept), "draws": draws,
+        "tokens_deleted_mean": float(np.mean(tokens)),
         "margin_drop_cited": float(d_mar_cited.mean()), "margin_drop_random": float(d_mar_rand.mean()),
         "margin_ratio": ratio(d_mar_cited, d_mar_rand),
+        "margin_ratio_ci95": bootstrap_ratio_ci(d_mar_cited, d_mar_rand, seed=seed),
+        "margin_drop_diff_median": float(np.median(d_mar_cited - d_mar_rand)),
+        "wilcoxon_p_cited_greater": p_value,
         "sim_drop_cited": float(d_sim_cited.mean()), "sim_drop_random": float(d_sim_rand.mean()),
         "sim_ratio": ratio(d_sim_cited, d_sim_rand),
         "frac_cited_hurts_more": float((d_mar_cited > d_mar_rand).mean()),
         "assignment_flips_cited": float((mar[:, 1] < 0).mean()),
         "assignment_flips_random": float((mar[:, 2:] < 0).mean()),
-        "per_doc": [{"doc_id": it["doc_id"], "cited": it["cited"], "margin_drop_cited": float(a),
-                     "margin_drop_random": float(b)} for it, a, b in zip(kept, d_mar_cited, d_mar_rand)],
+        "per_doc": [{"doc_id": it["doc_id"], "cited": it["cited"], "tokens": n, "margin_drop_cited": float(a),
+                     "margin_drop_random": float(b)} for it, n, a, b in zip(kept, tokens, d_mar_cited, d_mar_rand)],
     }
 
 
@@ -211,11 +257,27 @@ def triple_prompt(t: dict, onto: dict) -> str:
         **{k: t[k] for k in ("source", "source_type", "relation", "target", "target_type")})
 
 
-def label_prompts(c: dict) -> list[tuple[str, str]]:
-    """Both presentation orders, to cancel position bias: [(prompt, which label sits at 'A')]."""
+LABEL_PAIRS = {  # comparison -> (bundle key of the label we test, bundle key of the baseline)
+    "kg_vs_ctfidf": ("kg_label", "ctfidf_label"),          # headline: PageRank entities vs c-TF-IDF terms
+    "pagerank_vs_degree": ("kg_label", "degree_label"),    # ablation: does PageRank beat plain degree?
+}
+
+
+def label_prompts(c: dict, comparison: str = "kg_vs_ctfidf") -> list[tuple[str, bool]]:
+    """Both presentation orders, to cancel position bias: [(prompt, tested label sits at 'A')].
+    Empty when either label is missing or the two are identical (nothing to judge)."""
+    ours, base = (c.get(k) for k in LABEL_PAIRS[comparison])
+    if not ours or not base or ours == base:
+        return []
     posts = "\n".join(f'- """{s}"""' for s in c["samples"])
     return [(LABEL_PROMPT.format(posts=posts, a=a, b=b), first)
-            for first, a, b in (("kg", c["kg_label"], c["ctfidf_label"]), ("ctfidf", c["ctfidf_label"], c["kg_label"]))]
+            for first, a, b in ((True, ours, base), (False, base, ours))]
+
+
+def label_overlap(a: str, b: str) -> float:
+    """Jaccard overlap of the entities in two ' · '-joined labels."""
+    x, y = ({t.strip() for t in s.split("·") if t.strip()} for s in (a or "", b or ""))
+    return len(x & y) / len(x | y) if x | y else 1.0
 
 
 # ==========================================================
@@ -260,10 +322,12 @@ def summarize_triples(by_judge: dict[str, list]) -> dict:
 
 
 def summarize_labels(wins: list[bool], n_clusters: int, by_judge: dict[str, list[bool]]) -> dict:
+    """wins: one bool per judgment (tested label chosen), both orders and all judges pooled."""
     return {
         "n_clusters": n_clusters,
-        "kg_preferred": float(np.mean(wins)) if wins else None,
-        "kg_preferred_by_judge": {m: float(np.mean(v)) if v else None for m, v in by_judge.items()},
+        "n_judgments": len(wins),
+        "preferred": float(np.mean(wins)) if wins else None,
+        "preferred_by_judge": {m: float(np.mean(v)) if v else None for m, v in by_judge.items()},
     }
 
 
@@ -282,8 +346,14 @@ def check_targets(report: dict) -> dict[str, dict]:
     values = {
         "nmi": report.get("best_nmi"), "faithfulness_ratio": f.get("margin_ratio"),
         "plausibility_mean": p.get("mean"), "plausibility_alpha": p.get("krippendorff_alpha"),
-        "kg_label_preferred": lab.get("kg_preferred"), "triple_precision": t.get("precision"),
+        "kg_label_preferred": (lab.get("kg_vs_ctfidf") or {}).get("preferred"), "triple_precision": t.get("precision"),
         "ontology_conformance": kg.get("ontology_conformance"),
     }
-    return {k: {"value": v, "target": TARGETS[k], "pass": None if v is None else v >= TARGETS[k]}
-            for k, v in values.items()}
+    out = {k: {"value": v, "target": TARGETS[k], "pass": None if v is None else v >= TARGETS[k]}
+           for k, v in values.items()}
+    # Random deletions that do not lower the margin at all make the ratio undefined; cited
+    # deletions that do lower it then beat random by any factor.
+    if f and f.get("margin_ratio") is None and f.get("n"):
+        if f["margin_drop_cited"] > 0 >= f["margin_drop_random"]:
+            out["faithfulness_ratio"] |= {"value": "inf (random drop <= 0)", "pass": True}
+    return out

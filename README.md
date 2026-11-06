@@ -131,5 +131,24 @@ python scripts/06_eval.py run --workers 8 [--judges modelA,modelB]   # >=2 judge
 # report: eval/reports/phase1-*.md
 ```
 
-`SWM_RUN_ID=all-mpnet-base-v2__hdbscan` pins the run (faithfulness needs an SBERT run, not tfidf_lsa).
+`SWM_RUN_ID=bge-base-en-v1.5__agglomerative` pins the presented run (faithfulness needs an SBERT/BGE run, not tfidf_lsa).
 Judgments are cached in `data/cache/eval/`; rerunning resumes. Text2Cypher accuracy is not in this script.
+
+## Final evaluation run (laptop + Sol embeddings + ASU RC API)
+
+```bash
+# Sol (GPU): chunked embeddings, no database needed  -> copy data/cache/*.npy *.meta.json to the laptop
+sbatch scripts/sol/embed.sbatch
+# laptop
+python scripts/01_ingest.py
+python scripts/02_embed.py                                    # cache hits for mpnet / BGE, fits TF-IDF+LSA
+python scripts/03b_k_select.py --embedding bge-base-en-v1.5   # label-free k
+python scripts/03_cluster.py --seeds 42 43 44                 # stored run = seed 42; mean/std report
+python scripts/04_explain.py
+python scripts/05_kg.py --workers 8                           # prints rejection reasons
+python scripts/05_kg.py --workers 8 --extract-only            # with LLM_MODEL=<second model>: extraction ablation
+python scripts/06_eval.py export && python scripts/06_eval.py run --judges <judge1>,<judge2>
+python scripts/06_eval.py text2cypher
+python scripts/07_human_eval.py make --raters samarth mohak asmi pratik   # then fill the CSVs
+python scripts/07_human_eval.py score
+```

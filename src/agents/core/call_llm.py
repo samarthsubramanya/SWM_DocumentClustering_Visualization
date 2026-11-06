@@ -5,9 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from langchain_ollama import ChatOllama
-
 from src.core.events import emit
+from swm.llm import build_chat
 
 
 # ==========================================================
@@ -228,7 +227,7 @@ class SharedLLM:
 
     def __init__(
         self,
-        llm: ChatOllama,
+        llm: Any,
     ) -> None:
         self._llm = llm
 
@@ -278,27 +277,19 @@ class SharedLLM:
 # Shared Model
 # ==========================================================
 
-_chat_llm = ChatOllama(
-    model=os.getenv(
-        "OLLAMA_MODEL",
-        "llama3.1:8b",
-    ),
-    base_url=os.getenv(
-        "OLLAMA_BASE_URL",
-        "http://localhost:11434",
-    ),
-    temperature=0,
-
-    # Do not spend large reasoning budgets on small
-    # routing/state-transition decisions.
-    reasoning=False,
-
+# Provider (Ollama or an OpenAI-compatible endpoint such as ASU RC) comes from .env;
+# see swm/llm.py. Same switch as the batch stages.
+_chat_llm = build_chat(
     # Explicitly provide enough output capacity rather than
     # relying on the runtime/model default.
     num_predict=2048,
 
     # Text2Cypher / rationale prompts include schema and evidence.
     num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "8192")),
+
+    # Ollama only: do not spend large reasoning budgets on small
+    # routing/state-transition decisions.
+    reasoning=False,
 )
 
 _llm = SharedLLM(

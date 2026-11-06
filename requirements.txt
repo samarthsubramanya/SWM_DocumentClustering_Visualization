@@ -4,6 +4,7 @@
 langchain
 langgraph
 langchain-ollama
+langchain-openai          # OpenAI-compatible endpoints (ASU RC / Voyager keys)
 langsmith
 
 # ==========================================================

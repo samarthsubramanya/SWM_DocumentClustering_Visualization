@@ -8,6 +8,8 @@ import tarfile
 import urllib.request
 from pathlib import Path
 
+from tqdm import tqdm
+
 from swm import db
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
@@ -91,7 +93,7 @@ def load_20ng(subset: str = "all", min_tokens: int = 20, archive: Path = DEFAULT
     path = ensure_archive(archive)
     raw = []
     with tarfile.open(path, "r:gz") as tar:
-        for member in tar:
+        for member in tqdm(tar, desc="reading archive", unit="file"):
             parts = member.name.split("/")  # 20news-bydate-train/sci.space/60151
             if not member.isfile() or len(parts) != 3:
                 continue
@@ -103,7 +105,7 @@ def load_20ng(subset: str = "all", min_tokens: int = 20, archive: Path = DEFAULT
 
     groups = sorted({g for _, g, _, _ in raw})
     docs = []
-    for split, group, number, text in raw:
+    for split, group, number, text in tqdm(raw, desc="cleaning posts", unit="doc"):
         text = strip_footer(strip_quotes(strip_header(text))).replace("\x00", "").strip()  # Postgres rejects NUL
         if len(text.split()) < min_tokens or encoded_share(text) > MAX_ENCODED_SHARE:
             continue
@@ -125,14 +127,16 @@ def save_documents(docs: list[dict]) -> None:
             "DELETE FROM documents WHERE source = %s AND NOT (id = ANY(%s))",
             (source, [d["id"] for d in docs if d.get("source", "20ng") == source]),
         )
-    db.executemany(
-        """INSERT INTO documents (id, text, label, label_name, split, source)
-           VALUES (%s, %s, %s, %s, %s, %s)
-           ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text, label = EXCLUDED.label,
-               label_name = EXCLUDED.label_name, split = EXCLUDED.split, source = EXCLUDED.source""",
-        [(d["id"], d["text"], d.get("label"), d.get("label_name"), d.get("split"), d.get("source", "20ng"))
-         for d in docs],
-    )
+    rows = [(d["id"], d["text"], d.get("label"), d.get("label_name"), d.get("split"), d.get("source", "20ng"))
+            for d in docs]
+    for start in tqdm(range(0, len(rows), 500), desc="writing to Postgres", unit="batch"):  # remote DBs are slow
+        db.executemany(
+            """INSERT INTO documents (id, text, label, label_name, split, source)
+               VALUES (%s, %s, %s, %s, %s, %s)
+               ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text, label = EXCLUDED.label,
+                   label_name = EXCLUDED.label_name, split = EXCLUDED.split, source = EXCLUDED.source""",
+            rows[start:start + 500],
+        )
 
 
 def load_documents(source: str = "20ng") -> list[dict]:

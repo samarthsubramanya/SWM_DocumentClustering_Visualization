@@ -2,13 +2,13 @@
 # Compiled 1:1 into the Neo4j schema: entity -> label, relation -> relationship type.
 entities:
   Person:
-    descriptor: An individual named in the text (author, official, public figure).
+    descriptor: A named real individual the text is about or refers to (official, researcher, public figure). Not the post's author, a username, or a signature.
   Organization:
     descriptor: A company, agency, team, or other named institution.
   Location:
     descriptor: A place name (city, country, region, venue).
   Event:
-    descriptor: A named or dated occurrence (election, launch, match, conference).
+    descriptor: A named occurrence (election, launch, match, trial, conference). Not a bare date or time.
   Artifact:
     descriptor: A product, technology, or piece of software mentioned in the text.
   Topic:

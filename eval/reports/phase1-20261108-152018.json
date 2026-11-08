@@ -1,0 +1,2505 @@
+{
+  "run_id": "bge-base-en-v1.5__agglomerative",
+  "embedding": "bge-base-en-v1.5",
+  "judges": [
+    "qwen3-30b-a3b"
+  ],
+  "judge_is_proxy_for_human_raters": true,
+  "created": "2026-11-08 15:16:44",
+  "clustering": {
+    "all-mpnet-base-v2__agglomerative": {
+      "ari": 0.5003277976243645,
+      "nmi": 0.64066629471371,
+      "dbcv": -0.27537201126882743,
+      "purity": 0.63662960795787,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.49293944239616394
+    },
+    "all-mpnet-base-v2__hdbscan": {
+      "ari": 0.32505207973536504,
+      "nmi": 0.5697977177065369,
+      "dbcv": 0.4425847608662223,
+      "purity": 0.5734347571679345,
+      "ari_core": 0.5341001687627446,
+      "nmi_core": 0.6680797455479347,
+      "n_clusters": 34,
+      "noise_rate": 0.19215915740198952,
+      "silhouette": 0.568092405796051,
+      "ari_assigned": 0.44909878836946676,
+      "nmi_assigned": 0.604644145678511
+    },
+    "all-mpnet-base-v2__kmeans": {
+      "ari": 0.49738924358702924,
+      "nmi": 0.6351005647787688,
+      "dbcv": -0.2586014174702582,
+      "purity": 0.6203627852545348,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.5204943418502808
+    },
+    "bge-base-en-v1.5__agglomerative": {
+      "ari": 0.5098881675748691,
+      "nmi": 0.6631135709303666,
+      "dbcv": -0.35826920096123044,
+      "purity": 0.6795201872440023,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.4674461781978607
+    },
+    "bge-base-en-v1.5__hdbscan": {
+      "ari": 0.2735871055925009,
+      "nmi": 0.6019660858976575,
+      "dbcv": 0.3993565077558169,
+      "purity": 0.47589233469865416,
+      "ari_core": 0.291768663643075,
+      "nmi_core": 0.65724347958831,
+      "n_clusters": 18,
+      "noise_rate": 0.09760093622001176,
+      "silhouette": 0.6441794633865356,
+      "ari_assigned": 0.2877831834432149,
+      "nmi_assigned": 0.6098506203755029
+    },
+    "bge-base-en-v1.5__kmeans": {
+      "ari": 0.5285202012199366,
+      "nmi": 0.6624353269705726,
+      "dbcv": -0.36033480398833817,
+      "purity": 0.6717963721474547,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.5257909297943115
+    },
+    "tfidf_lsa__agglomerative": {
+      "ari": 0.268977268444454,
+      "nmi": 0.4495661083133697,
+      "dbcv": null,
+      "purity": 0.41673493270918666,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.4564972221851349
+    },
+    "tfidf_lsa__hdbscan": {
+      "ari": 0.10034200201086554,
+      "nmi": 0.39592877755896283,
+      "dbcv": 0.37825661316826764,
+      "purity": 0.4155061439438268,
+      "ari_core": 0.3338869616610127,
+      "nmi_core": 0.530803011978063,
+      "n_clusters": 44,
+      "noise_rate": 0.3351667641895846,
+      "silhouette": 0.6249813437461853,
+      "ari_assigned": 0.245730630766036,
+      "nmi_assigned": 0.46129929071883197
+    },
+    "tfidf_lsa__kmeans": {
+      "ari": 0.2698813392457369,
+      "nmi": 0.45292741238842305,
+      "dbcv": null,
+      "purity": 0.41960210649502633,
+      "n_clusters": 20,
+      "noise_rate": 0.0,
+      "silhouette": 0.4793066382408142
+    }
+  },
+  "best_nmi": 0.6631135709303666,
+  "kg": {
+    "docs": 576,
+    "stats": {
+      "entities": 7050,
+      "relations": 3437,
+      "rejected": 2236,
+      "failed_docs": 23,
+      "rejected_by_reason": {
+        "relation: wrong source/target type": 1385,
+        "relation: endpoint not a kept entity": 796,
+        "entity: empty or over-long name": 28,
+        "entity: stop word / pronoun": 25,
+        "entity: type not in ontology": 1,
+        "relation: not in ontology": 1
+      }
+    },
+    "ontology_conformance": 0.8242552857030575,
+    "duplicate_rate": 0.005272727272727318,
+    "n_relations": 3437
+  },
+  "faithfulness": {
+    "n": 200,
+    "skipped": 0,
+    "draws": 3,
+    "tokens_deleted_mean": 3.57,
+    "margin_drop_cited": 0.0108474250882864,
+    "margin_drop_random": 0.00010690835915738717,
+    "margin_ratio": 101.46470642089844,
+    "margin_ratio_ci95": null,
+    "margin_drop_diff_median": 0.004908153787255287,
+    "wilcoxon_p_cited_greater": 7.734707931029822e-19,
+    "sim_drop_cited": 0.0063956486992537975,
+    "sim_drop_random": -0.00029235781403258443,
+    "sim_ratio": null,
+    "frac_cited_hurts_more": 0.765,
+    "assignment_flips_cited": 0.22,
+    "assignment_flips_random": 0.12833333333333333,
+    "base_margin_negative": 0.13,
+    "flips_cited_base_ok": 0.1206896551724138,
+    "flips_random_base_ok": 0.011494252873563218,
+    "flip_ratio": 10.5,
+    "margin_drop_diff_mean": 0.010740518569946289,
+    "margin_drop_diff_ci95": [
+      0.008417259901762009,
+      0.013286840170621872
+    ],
+    "per_doc": [
+      {
+        "doc_id": "train/sci.electronics/53730",
+        "cited": [
+          "circuit",
+          "use",
+          "current"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.004740893840789795,
+        "margin_drop_random": 0.0030710920691490173
+      },
+      {
+        "doc_id": "test/misc.forsale/76664",
+        "cited": [
+          "sell",
+          "interested"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.026137828826904297,
+        "margin_drop_random": -0.002614639699459076
+      },
+      {
+        "doc_id": "test/comp.graphics/39041",
+        "cited": [
+          "file",
+          "ftp",
+          "data"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.003303706645965576,
+        "margin_drop_random": -0.0037834830582141876
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54439",
+        "cited": [
+          "people",
+          "guns",
+          "government"
+        ],
+        "tokens": 11,
+        "margin_drop_cited": 0.0074841976165771484,
+        "margin_drop_random": 0.006275158375501633
+      },
+      {
+        "doc_id": "test/talk.politics.guns/54960",
+        "cited": [
+          "government",
+          "believe"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.0004067420959472656,
+        "margin_drop_random": 0.0005396406049840152
+      },
+      {
+        "doc_id": "test/sci.space/62452",
+        "cited": [
+          "shuttle",
+          "mission"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.021677851676940918,
+        "margin_drop_random": 6.389617919921875e-05
+      },
+      {
+        "doc_id": "test/sci.med/59435",
+        "cited": [
+          "medical",
+          "patients",
+          "health"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.015541315078735352,
+        "margin_drop_random": -0.0017777085304260254
+      },
+      {
+        "doc_id": "test/rec.motorcycles/104837",
+        "cited": [
+          "riding",
+          "road"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.0015696883201599121,
+        "margin_drop_random": 0.0007839398458600044
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54299",
+        "cited": [
+          "people",
+          "guns"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.025092244148254395,
+        "margin_drop_random": 0.0026472408790141344
+      },
+      {
+        "doc_id": "test/misc.forsale/76259",
+        "cited": [
+          "sale",
+          "offer",
+          "price"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.015505194664001465,
+        "margin_drop_random": -0.004122793674468994
+      },
+      {
+        "doc_id": "train/sci.space/60845",
+        "cited": [
+          "solar",
+          "data"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0697663426399231,
+        "margin_drop_random": 0.010964535176753998
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54415",
+        "cited": [
+          "government",
+          "control",
+          "did"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0003027915954589844,
+        "margin_drop_random": 0.0003084540367126465
+      },
+      {
+        "doc_id": "train/rec.motorcycles/105064",
+        "cited": [
+          "car"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.01429605484008789,
+        "margin_drop_random": -0.0015358533710241318
+      },
+      {
+        "doc_id": "test/comp.windows.x/67519",
+        "cited": [
+          "windows"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0015994906425476074,
+        "margin_drop_random": 0.0001918487250804901
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/53866",
+        "cited": [
+          "team"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.004403114318847656,
+        "margin_drop_random": 0.0010334625840187073
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/50523",
+        "cited": [
+          "drive",
+          "drives",
+          "apple"
+        ],
+        "tokens": 20,
+        "margin_drop_cited": 0.0007600188255310059,
+        "margin_drop_random": 0.0035166945308446884
+      },
+      {
+        "doc_id": "test/comp.os.ms-windows.misc/10047",
+        "cited": [
+          "file",
+          "software",
+          "print"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.008820414543151855,
+        "margin_drop_random": -0.0015306472778320312
+      },
+      {
+        "doc_id": "test/comp.graphics/39677",
+        "cited": [
+          "file",
+          "images",
+          "gif"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.014362096786499023,
+        "margin_drop_random": 0.0004909634590148926
+      },
+      {
+        "doc_id": "test/comp.windows.x/68134",
+        "cited": [
+          "pc"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": -0.0010251998901367188,
+        "margin_drop_random": -0.000983556266874075
+      },
+      {
+        "doc_id": "test/sci.med/59281",
+        "cited": [
+          "medical",
+          "clinical"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.002252519130706787,
+        "margin_drop_random": 0.0007609352469444275
+      },
+      {
+        "doc_id": "test/sci.space/61345",
+        "cited": [
+          "space",
+          "data"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.007870018482208252,
+        "margin_drop_random": -0.00658116489648819
+      },
+      {
+        "doc_id": "train/rec.autos/102780",
+        "cited": [
+          "price"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0022597908973693848,
+        "margin_drop_random": 0.00031693652272224426
+      },
+      {
+        "doc_id": "train/sci.crypt/15251",
+        "cited": [
+          "key",
+          "encryption",
+          "algorithm"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.027053892612457275,
+        "margin_drop_random": 0.00199899822473526
+      },
+      {
+        "doc_id": "test/comp.graphics/39080",
+        "cited": [
+          "image",
+          "available",
+          "program"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.01141589879989624,
+        "margin_drop_random": -0.0009852051734924316
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/104537",
+        "cited": [
+          "player"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.001566469669342041,
+        "margin_drop_random": 0.0010523200035095215
+      },
+      {
+        "doc_id": "test/sci.crypt/16042",
+        "cited": [
+          "used"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.001334846019744873,
+        "margin_drop_random": 0.00023613357916474342
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20931",
+        "cited": [
+          "god",
+          "believe",
+          "atheism"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": -0.0017907023429870605,
+        "margin_drop_random": 0.0010103583335876465
+      },
+      {
+        "doc_id": "train/sci.med/58082",
+        "cited": [
+          "medical",
+          "health"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.02519923448562622,
+        "margin_drop_random": 0.004705291241407394
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20656",
+        "cited": [
+          "people"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.0013543963432312012,
+        "margin_drop_random": -0.0003202958032488823
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104947",
+        "cited": [
+          "bike",
+          "motorcycle",
+          "bmw"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.022881507873535156,
+        "margin_drop_random": 0.007917800918221474
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/50462",
+        "cited": [
+          "drive",
+          "drives"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.011226773262023926,
+        "margin_drop_random": 0.0016796987038105726
+      },
+      {
+        "doc_id": "test/sci.med/59342",
+        "cited": [
+          "disease"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.008626878261566162,
+        "margin_drop_random": 0.004243314266204834
+      },
+      {
+        "doc_id": "train/comp.windows.x/66954",
+        "cited": [
+          "window"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.00685650110244751,
+        "margin_drop_random": 0.0019171424210071564
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/53842",
+        "cited": [
+          "hockey"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.05536162853240967,
+        "margin_drop_random": -0.0008106231689453125
+      },
+      {
+        "doc_id": "test/talk.politics.guns/55119",
+        "cited": [
+          "people"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.00974583625793457,
+        "margin_drop_random": 0.0017297463491559029
+      },
+      {
+        "doc_id": "train/talk.religion.misc/84268",
+        "cited": [
+          "god",
+          "love"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.0009648799896240234,
+        "margin_drop_random": 0.0003809519112110138
+      },
+      {
+        "doc_id": "test/alt.atheism/53579",
+        "cited": [
+          "religion"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.0016058087348937988,
+        "margin_drop_random": -0.00029200315475463867
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76032",
+        "cited": [
+          "people",
+          "istanbul"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.024186313152313232,
+        "margin_drop_random": -0.009709259495139122
+      },
+      {
+        "doc_id": "train/talk.religion.misc/83974",
+        "cited": [
+          "government",
+          "weapons",
+          "koresh"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.008749783039093018,
+        "margin_drop_random": -0.007604658603668213
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/104943",
+        "cited": [
+          "year",
+          "game",
+          "games"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": -0.00886911153793335,
+        "margin_drop_random": -0.005901198834180832
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20587",
+        "cited": [
+          "believe",
+          "people",
+          "truth"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.005775809288024902,
+        "margin_drop_random": -0.003796537406742573
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/50541",
+        "cited": [
+          "card",
+          "mac",
+          "apple"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.012951076030731201,
+        "margin_drop_random": 0.005295872688293457
+      },
+      {
+        "doc_id": "train/alt.atheism/53534",
+        "cited": [
+          "palestinians"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.05695915222167969,
+        "margin_drop_random": -0.0035056062042713165
+      },
+      {
+        "doc_id": "test/talk.politics.guns/55110",
+        "cited": [
+          "fbi",
+          "koresh",
+          "did"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.003043055534362793,
+        "margin_drop_random": 0.0008107796311378479
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/104814",
+        "cited": [
+          "game",
+          "baseball",
+          "player"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.02582472562789917,
+        "margin_drop_random": 0.0019270777702331543
+      },
+      {
+        "doc_id": "test/sci.electronics/54313",
+        "cited": [
+          "bus",
+          "controller"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.003209829330444336,
+        "margin_drop_random": -0.0001786947250366211
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76147",
+        "cited": [
+          "state"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0002943277359008789,
+        "margin_drop_random": 0.00042333267629146576
+      },
+      {
+        "doc_id": "train/alt.atheism/53252",
+        "cited": [
+          "time",
+          "american"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.022143065929412842,
+        "margin_drop_random": 0.002461890457198024
+      },
+      {
+        "doc_id": "test/misc.forsale/76254",
+        "cited": [
+          "shipping",
+          "offer",
+          "drive"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.01574528217315674,
+        "margin_drop_random": 0.006125014275312424
+      },
+      {
+        "doc_id": "test/comp.windows.x/68077",
+        "cited": [
+          "pc"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.027350187301635742,
+        "margin_drop_random": 0.0024137496948242188
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9737",
+        "cited": [
+          "windows",
+          "dos",
+          "disk"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.008505463600158691,
+        "margin_drop_random": -0.0006003193557262421
+      },
+      {
+        "doc_id": "test/comp.windows.x/68237",
+        "cited": [
+          "file",
+          "program"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 4.2378902435302734e-05,
+        "margin_drop_random": -0.001118263229727745
+      },
+      {
+        "doc_id": "train/comp.graphics/38599",
+        "cited": [
+          "file",
+          "use",
+          "files"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": -0.0060080885887146,
+        "margin_drop_random": 0.0009638071060180664
+      },
+      {
+        "doc_id": "train/comp.graphics/38216",
+        "cited": [
+          "file"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.004761755466461182,
+        "margin_drop_random": 0.0022646388970315456
+      },
+      {
+        "doc_id": "train/sci.crypt/15284",
+        "cited": [
+          "key",
+          "clipper",
+          "chip"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.008595705032348633,
+        "margin_drop_random": 0.004230380058288574
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21787",
+        "cited": [
+          "god",
+          "jesus",
+          "christ"
+        ],
+        "tokens": 9,
+        "margin_drop_cited": 0.004752695560455322,
+        "margin_drop_random": 0.00469902902841568
+      },
+      {
+        "doc_id": "train/talk.religion.misc/84072",
+        "cited": [
+          "time"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0010383129119873047,
+        "margin_drop_random": -0.0013876557350158691
+      },
+      {
+        "doc_id": "test/comp.os.ms-windows.misc/10801",
+        "cited": [
+          "motif",
+          "dos",
+          "program"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.007802367210388184,
+        "margin_drop_random": 0.0021937303245067596
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54165",
+        "cited": [
+          "batf"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.005839228630065918,
+        "margin_drop_random": -0.0006986064836382866
+      },
+      {
+        "doc_id": "train/comp.windows.x/67176",
+        "cited": [
+          "server",
+          "program",
+          "display"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": -0.0001785755157470703,
+        "margin_drop_random": -0.0022831372916698456
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104502",
+        "cited": [
+          "bikes"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.027597546577453613,
+        "margin_drop_random": 0.0003848075866699219
+      },
+      {
+        "doc_id": "test/rec.autos/103408",
+        "cited": [
+          "toyota"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0011067390441894531,
+        "margin_drop_random": 0.0006706900894641876
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9707",
+        "cited": [
+          "graphics"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.004214584827423096,
+        "margin_drop_random": -9.725498966872692e-05
+      },
+      {
+        "doc_id": "test/comp.sys.mac.hardware/52293",
+        "cited": [
+          "apple"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.008771717548370361,
+        "margin_drop_random": 0.0013497881591320038
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/102732",
+        "cited": [
+          "year"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.001741170883178711,
+        "margin_drop_random": 0.0008003711700439453
+      },
+      {
+        "doc_id": "test/talk.politics.mideast/77306",
+        "cited": [
+          "people",
+          "muslims",
+          "war"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.0015361309051513672,
+        "margin_drop_random": -0.001637440174818039
+      },
+      {
+        "doc_id": "train/sci.electronics/52761",
+        "cited": [
+          "circuit",
+          "current",
+          "amp"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.00785362720489502,
+        "margin_drop_random": -0.004763443022966385
+      },
+      {
+        "doc_id": "train/sci.crypt/15582",
+        "cited": [
+          "des"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.007470309734344482,
+        "margin_drop_random": 0.0008499249815940857
+      },
+      {
+        "doc_id": "train/comp.graphics/38666",
+        "cited": [
+          "graphics",
+          "file",
+          "ftp"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.001761794090270996,
+        "margin_drop_random": 0.01719866320490837
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/53588",
+        "cited": [
+          "season"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.00029927492141723633,
+        "margin_drop_random": 0.007980186492204666
+      },
+      {
+        "doc_id": "test/sci.crypt/15889",
+        "cited": [
+          "government",
+          "nsa",
+          "algorithm"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.024006426334381104,
+        "margin_drop_random": 0.005890287458896637
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20718",
+        "cited": [
+          "people",
+          "evidence"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.002936124801635742,
+        "margin_drop_random": 0.00171583890914917
+      },
+      {
+        "doc_id": "test/comp.sys.mac.hardware/52047",
+        "cited": [
+          "monitor"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.0009582638740539551,
+        "margin_drop_random": -0.0023243222385644913
+      },
+      {
+        "doc_id": "test/comp.os.ms-windows.misc/10851",
+        "cited": [
+          "file",
+          "files"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.014261960983276367,
+        "margin_drop_random": 0.0025970134884119034
+      },
+      {
+        "doc_id": "train/sci.med/59004",
+        "cited": [
+          "energy"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.003616929054260254,
+        "margin_drop_random": -0.001948375254869461
+      },
+      {
+        "doc_id": "test/sci.med/59601",
+        "cited": [
+          "disease",
+          "infection",
+          "clinical"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0003215670585632324,
+        "margin_drop_random": 0.0007623210549354553
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76363",
+        "cited": [
+          "armenian",
+          "armenians",
+          "turkish"
+        ],
+        "tokens": 12,
+        "margin_drop_cited": -0.007371425628662109,
+        "margin_drop_random": -0.011938333511352539
+      },
+      {
+        "doc_id": "test/talk.politics.mideast/77221",
+        "cited": [
+          "armenian",
+          "armenians",
+          "turkish"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.029454827308654785,
+        "margin_drop_random": 0.0016400031745433807
+      },
+      {
+        "doc_id": "test/comp.sys.mac.hardware/52326",
+        "cited": [
+          "memory"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.012770771980285645,
+        "margin_drop_random": 0.002270221710205078
+      },
+      {
+        "doc_id": "test/sci.space/61348",
+        "cited": [
+          "space"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.04795479774475098,
+        "margin_drop_random": -0.001774052157998085
+      },
+      {
+        "doc_id": "test/misc.forsale/76207",
+        "cited": [
+          "drive",
+          "sell"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.015580415725708008,
+        "margin_drop_random": -0.013958930969238281
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9741",
+        "cited": [
+          "card",
+          "bus",
+          "use"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.00712132453918457,
+        "margin_drop_random": 0.00013651326298713684
+      },
+      {
+        "doc_id": "test/talk.politics.guns/55115",
+        "cited": [
+          "weapons"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.00488966703414917,
+        "margin_drop_random": -0.0009068436920642853
+      },
+      {
+        "doc_id": "train/comp.windows.x/67048",
+        "cited": [
+          "use"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0054468512535095215,
+        "margin_drop_random": 0.01834052801132202
+      },
+      {
+        "doc_id": "train/sci.electronics/53622",
+        "cited": [
+          "power",
+          "current"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0015788674354553223,
+        "margin_drop_random": -0.0012015700340270996
+      },
+      {
+        "doc_id": "train/comp.graphics/38750",
+        "cited": [
+          "image",
+          "files",
+          "gif"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.017458558082580566,
+        "margin_drop_random": 0.001781601458787918
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/105018",
+        "cited": [
+          "game"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0057846903800964355,
+        "margin_drop_random": -0.005250532180070877
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9506",
+        "cited": [
+          "using"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.008674919605255127,
+        "margin_drop_random": -0.00812564231455326
+      },
+      {
+        "doc_id": "train/comp.graphics/38508",
+        "cited": [
+          "images"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0074956417083740234,
+        "margin_drop_random": 0.0009076595306396484
+      },
+      {
+        "doc_id": "test/sci.electronics/54159",
+        "cited": [
+          "used"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0010020136833190918,
+        "margin_drop_random": 0.0013526082038879395
+      },
+      {
+        "doc_id": "train/sci.space/60103",
+        "cited": [
+          "space",
+          "nasa",
+          "shuttle"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.015516459941864014,
+        "margin_drop_random": -0.004318892955780029
+      },
+      {
+        "doc_id": "test/talk.politics.guns/54585",
+        "cited": [
+          "people",
+          "fbi",
+          "batf"
+        ],
+        "tokens": 9,
+        "margin_drop_cited": 0.004382073879241943,
+        "margin_drop_random": 0.0014160871505737305
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20666",
+        "cited": [
+          "god",
+          "christian",
+          "people"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": -0.0014126300811767578,
+        "margin_drop_random": 0.0012627430260181427
+      },
+      {
+        "doc_id": "train/sci.space/61006",
+        "cited": [
+          "orbit",
+          "lunar"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.07059246301651001,
+        "margin_drop_random": 0.002063572406768799
+      },
+      {
+        "doc_id": "train/sci.electronics/53973",
+        "cited": [
+          "use",
+          "radio"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.003339409828186035,
+        "margin_drop_random": -0.0019022226333618164
+      },
+      {
+        "doc_id": "test/comp.sys.mac.hardware/52103",
+        "cited": [
+          "use"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -1.8417835235595703e-05,
+        "margin_drop_random": 0.000840604305267334
+      },
+      {
+        "doc_id": "train/sci.crypt/15397",
+        "cited": [
+          "key",
+          "keys",
+          "privacy"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.009509384632110596,
+        "margin_drop_random": -0.0036484599113464355
+      },
+      {
+        "doc_id": "train/sci.electronics/53604",
+        "cited": [
+          "wire",
+          "ground",
+          "wiring"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.00505906343460083,
+        "margin_drop_random": -0.00661911815404892
+      },
+      {
+        "doc_id": "test/rec.sport.hockey/54043",
+        "cited": [
+          "game",
+          "team",
+          "play"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": -0.004905998706817627,
+        "margin_drop_random": -0.003097616136074066
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104449",
+        "cited": [
+          "ride"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0025579333305358887,
+        "margin_drop_random": -0.0007704310119152069
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54152",
+        "cited": [
+          "guns"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.05329751968383789,
+        "margin_drop_random": -0.002513488754630089
+      },
+      {
+        "doc_id": "test/sci.space/62449",
+        "cited": [
+          "moon"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.011605620384216309,
+        "margin_drop_random": -0.004103720188140869
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/105046",
+        "cited": [
+          "year"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 3.349781036376953e-05,
+        "margin_drop_random": -0.001478513702750206
+      },
+      {
+        "doc_id": "train/comp.windows.x/67231",
+        "cited": [
+          "window",
+          "file",
+          "use"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": -0.0012468695640563965,
+        "margin_drop_random": -0.002024151384830475
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9727",
+        "cited": [
+          "use"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.0004000067710876465,
+        "margin_drop_random": -0.00012946128845214844
+      },
+      {
+        "doc_id": "test/talk.politics.guns/54699",
+        "cited": [
+          "gun",
+          "fbi",
+          "batf"
+        ],
+        "tokens": 13,
+        "margin_drop_cited": -0.0007085204124450684,
+        "margin_drop_random": 0.002374790608882904
+      },
+      {
+        "doc_id": "train/sci.electronics/53749",
+        "cited": [
+          "phone"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.015431225299835205,
+        "margin_drop_random": -0.0038244128227233887
+      },
+      {
+        "doc_id": "train/sci.space/61125",
+        "cited": [
+          "space"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.02551060914993286,
+        "margin_drop_random": 0.001941402442753315
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/104435",
+        "cited": [
+          "team",
+          "games"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.0015810728073120117,
+        "margin_drop_random": 0.0014222655445337296
+      },
+      {
+        "doc_id": "test/sci.med/59319",
+        "cited": [
+          "current"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0006029009819030762,
+        "margin_drop_random": 0.00018660351634025574
+      },
+      {
+        "doc_id": "train/sci.space/61027",
+        "cited": [
+          "shuttle"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.05393475294113159,
+        "margin_drop_random": -0.014263730496168137
+      },
+      {
+        "doc_id": "train/alt.atheism/51142",
+        "cited": [
+          "people"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.0007028579711914062,
+        "margin_drop_random": -0.004080355167388916
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76253",
+        "cited": [
+          "jews",
+          "people"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.061139822006225586,
+        "margin_drop_random": 0.0031978487968444824
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76523",
+        "cited": [
+          "armenians",
+          "turkish",
+          "armenia"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.027055740356445312,
+        "margin_drop_random": 0.00048023462295532227
+      },
+      {
+        "doc_id": "test/comp.sys.ibm.pc.hardware/60963",
+        "cited": [
+          "card"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0072571635246276855,
+        "margin_drop_random": -4.58545982837677e-05
+      },
+      {
+        "doc_id": "test/sci.space/61243",
+        "cited": [
+          "space",
+          "nasa",
+          "shuttle"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.022587895393371582,
+        "margin_drop_random": -0.007924079895019531
+      },
+      {
+        "doc_id": "test/comp.os.ms-windows.misc/10055",
+        "cited": [
+          "dos",
+          "disk",
+          "using"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.007000923156738281,
+        "margin_drop_random": -0.0030355453491210938
+      },
+      {
+        "doc_id": "train/talk.religion.misc/83882",
+        "cited": [
+          "believe"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.00240170955657959,
+        "margin_drop_random": 0.00032019615173339844
+      },
+      {
+        "doc_id": "test/talk.religion.misc/84082",
+        "cited": [
+          "god",
+          "life",
+          "true"
+        ],
+        "tokens": 11,
+        "margin_drop_cited": -0.0036050081253051758,
+        "margin_drop_random": -0.0017040176317095757
+      },
+      {
+        "doc_id": "train/comp.sys.ibm.pc.hardware/60269",
+        "cited": [
+          "card",
+          "bus",
+          "monitor"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.02455991506576538,
+        "margin_drop_random": 0.0018267855048179626
+      },
+      {
+        "doc_id": "test/talk.politics.guns/54602",
+        "cited": [
+          "fbi",
+          "weapons",
+          "did"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.006990015506744385,
+        "margin_drop_random": 0.002538621425628662
+      },
+      {
+        "doc_id": "test/comp.sys.mac.hardware/51966",
+        "cited": [
+          "drive"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0006335973739624023,
+        "margin_drop_random": -0.0021889805793762207
+      },
+      {
+        "doc_id": "test/sci.electronics/54192",
+        "cited": [
+          "time"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.002294003963470459,
+        "margin_drop_random": 0.0009124079952016473
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/104906",
+        "cited": [
+          "ball"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.001226961612701416,
+        "margin_drop_random": -0.0011012330651283264
+      },
+      {
+        "doc_id": "train/soc.religion.christian/20964",
+        "cited": [
+          "argument"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0010349154472351074,
+        "margin_drop_random": -0.00040439749136567116
+      },
+      {
+        "doc_id": "test/talk.religion.misc/84057",
+        "cited": [
+          "believe",
+          "evidence"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0017316341400146484,
+        "margin_drop_random": 0.004495661705732346
+      },
+      {
+        "doc_id": "test/sci.electronics/54237",
+        "cited": [
+          "circuit",
+          "voltage"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.013653814792633057,
+        "margin_drop_random": -0.002379775047302246
+      },
+      {
+        "doc_id": "train/sci.med/58853",
+        "cited": [
+          "people",
+          "evidence"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": -0.004548549652099609,
+        "margin_drop_random": -0.0040146904066205025
+      },
+      {
+        "doc_id": "train/rec.autos/101580",
+        "cited": [
+          "ford"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.009104371070861816,
+        "margin_drop_random": 0.0018780436366796494
+      },
+      {
+        "doc_id": "train/comp.sys.ibm.pc.hardware/60153",
+        "cited": [
+          "use",
+          "modem",
+          "used"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": -0.0024114251136779785,
+        "margin_drop_random": 0.0020129482727497816
+      },
+      {
+        "doc_id": "train/sci.electronics/53825",
+        "cited": [
+          "phone"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.00153273344039917,
+        "margin_drop_random": 0.003109872341156006
+      },
+      {
+        "doc_id": "train/comp.windows.x/67164",
+        "cited": [
+          "program",
+          "sun"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.0003994107246398926,
+        "margin_drop_random": -0.0030148830264806747
+      },
+      {
+        "doc_id": "test/rec.motorcycles/104950",
+        "cited": [
+          "bike"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.045737504959106445,
+        "margin_drop_random": 0.00017617270350456238
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21796",
+        "cited": [
+          "people"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.002464115619659424,
+        "margin_drop_random": 0.0019713835790753365
+      },
+      {
+        "doc_id": "test/rec.motorcycles/104838",
+        "cited": [
+          "bike"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.03367489576339722,
+        "margin_drop_random": -0.0005669593811035156
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21429",
+        "cited": [
+          "lord"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.006192922592163086,
+        "margin_drop_random": -0.0006321258842945099
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54530",
+        "cited": [
+          "people",
+          "government"
+        ],
+        "tokens": 9,
+        "margin_drop_cited": -0.0018977522850036621,
+        "margin_drop_random": -0.001147449016571045
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/104541",
+        "cited": [
+          "team",
+          "players",
+          "league"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.0025603771209716797,
+        "margin_drop_random": -0.0023165717720985413
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104576",
+        "cited": [
+          "dod",
+          "bikes",
+          "road"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.017281830310821533,
+        "margin_drop_random": 0.003350120037794113
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21753",
+        "cited": [
+          "god",
+          "christ",
+          "man"
+        ],
+        "tokens": 12,
+        "margin_drop_cited": 0.024971842765808105,
+        "margin_drop_random": -0.0030711498111486435
+      },
+      {
+        "doc_id": "train/talk.politics.guns/54665",
+        "cited": [
+          "gun",
+          "fbi",
+          "batf"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.011684298515319824,
+        "margin_drop_random": -0.003307301551103592
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/53736",
+        "cited": [
+          "nhl"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.01047748327255249,
+        "margin_drop_random": 0.0017567500472068787
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/51641",
+        "cited": [
+          "mac",
+          "apple",
+          "use"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.021344363689422607,
+        "margin_drop_random": -0.0008784737437963486
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/53716",
+        "cited": [
+          "game",
+          "team",
+          "hockey"
+        ],
+        "tokens": 5,
+        "margin_drop_cited": 0.003313899040222168,
+        "margin_drop_random": 0.001222170889377594
+      },
+      {
+        "doc_id": "train/comp.sys.ibm.pc.hardware/60229",
+        "cited": [
+          "drive"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.017956197261810303,
+        "margin_drop_random": 5.789613351225853e-05
+      },
+      {
+        "doc_id": "train/comp.graphics/38675",
+        "cited": [
+          "image"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.01900392770767212,
+        "margin_drop_random": 0.00021976232528686523
+      },
+      {
+        "doc_id": "test/sci.med/59307",
+        "cited": [
+          "treatment"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.00665205717086792,
+        "margin_drop_random": 0.0012092404067516327
+      },
+      {
+        "doc_id": "test/rec.motorcycles/104810",
+        "cited": [
+          "bike",
+          "ride",
+          "riding"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.005128622055053711,
+        "margin_drop_random": -0.0009047016501426697
+      },
+      {
+        "doc_id": "train/rec.autos/102882",
+        "cited": [
+          "road",
+          "right"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.010284125804901123,
+        "margin_drop_random": 0.0002911289338953793
+      },
+      {
+        "doc_id": "train/misc.forsale/76347",
+        "cited": [
+          "car",
+          "miles",
+          "toyota"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.0037931203842163086,
+        "margin_drop_random": -0.0032648248597979546
+      },
+      {
+        "doc_id": "test/comp.windows.x/67998",
+        "cited": [
+          "file",
+          "xterm"
+        ],
+        "tokens": 10,
+        "margin_drop_cited": 0.01186305284500122,
+        "margin_drop_random": 0.005819141864776611
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/75971",
+        "cited": [
+          "israeli",
+          "arab",
+          "jews"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.04769092798233032,
+        "margin_drop_random": -0.00481424480676651
+      },
+      {
+        "doc_id": "test/comp.os.ms-windows.misc/10933",
+        "cited": [
+          "windows",
+          "dos"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.010425090789794922,
+        "margin_drop_random": -0.004053574055433273
+      },
+      {
+        "doc_id": "test/misc.forsale/76590",
+        "cited": [
+          "sale",
+          "shipping",
+          "drive"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.026036381721496582,
+        "margin_drop_random": 0.00013170763850212097
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/104730",
+        "cited": [
+          "baseball",
+          "team",
+          "players"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": -0.008513450622558594,
+        "margin_drop_random": 0.0015624985098838806
+      },
+      {
+        "doc_id": "train/sci.electronics/52732",
+        "cited": [
+          "cars"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.05048555135726929,
+        "margin_drop_random": 0.0008072452619671822
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/104953",
+        "cited": [
+          "game",
+          "la"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.0019323229789733887,
+        "margin_drop_random": 0.0028264932334423065
+      },
+      {
+        "doc_id": "train/talk.politics.misc/178590",
+        "cited": [
+          "cars"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.03477001190185547,
+        "margin_drop_random": 0.0010851416736841202
+      },
+      {
+        "doc_id": "train/sci.space/60927",
+        "cited": [
+          "lunar"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.027760088443756104,
+        "margin_drop_random": -0.0007199421525001526
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/50529",
+        "cited": [
+          "video"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.009235203266143799,
+        "margin_drop_random": -0.0014233775436878204
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/55022",
+        "cited": [
+          "game"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0,
+        "margin_drop_random": 0.0
+      },
+      {
+        "doc_id": "test/comp.sys.ibm.pc.hardware/61144",
+        "cited": [
+          "drive",
+          "card",
+          "use"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.003885924816131592,
+        "margin_drop_random": 0.0017094016075134277
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9848",
+        "cited": [
+          "bus",
+          "video",
+          "bit"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.009382009506225586,
+        "margin_drop_random": 0.00025614164769649506
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9775",
+        "cited": [
+          "windows",
+          "dos",
+          "disk"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.014330565929412842,
+        "margin_drop_random": 0.0008287020027637482
+      },
+      {
+        "doc_id": "train/rec.sport.hockey/54222",
+        "cited": [
+          "game",
+          "team",
+          "season"
+        ],
+        "tokens": 8,
+        "margin_drop_cited": 0.0025221705436706543,
+        "margin_drop_random": 0.004069942981004715
+      },
+      {
+        "doc_id": "train/comp.windows.x/67355",
+        "cited": [
+          "file",
+          "program",
+          "sun"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": -0.000776827335357666,
+        "margin_drop_random": -0.0030082063749432564
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104321",
+        "cited": [
+          "helmet"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.015760481357574463,
+        "margin_drop_random": -0.00103030726313591
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21531",
+        "cited": [
+          "church",
+          "christ",
+          "bible"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.0016812682151794434,
+        "margin_drop_random": 0.0002943277359008789
+      },
+      {
+        "doc_id": "train/rec.sport.baseball/104341",
+        "cited": [
+          "games"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0028017163276672363,
+        "margin_drop_random": 0.0013001766055822372
+      },
+      {
+        "doc_id": "test/alt.atheism/54193",
+        "cited": [
+          "god",
+          "believe",
+          "atheism"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.0018589496612548828,
+        "margin_drop_random": 0.0005520768463611603
+      },
+      {
+        "doc_id": "train/sci.space/60922",
+        "cited": [
+          "moon",
+          "satellite"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.011150836944580078,
+        "margin_drop_random": -0.0018813814967870712
+      },
+      {
+        "doc_id": "train/soc.religion.christian/21346",
+        "cited": [
+          "god",
+          "atheism"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.007468998432159424,
+        "margin_drop_random": -0.0001757536083459854
+      },
+      {
+        "doc_id": "test/misc.forsale/76819",
+        "cited": [
+          "asking"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.02163386344909668,
+        "margin_drop_random": 0.002674718387424946
+      },
+      {
+        "doc_id": "train/sci.space/60956",
+        "cited": [
+          "space",
+          "launch"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.07818841934204102,
+        "margin_drop_random": -0.007049344480037689
+      },
+      {
+        "doc_id": "train/rec.motorcycles/104522",
+        "cited": [
+          "bike",
+          "dod",
+          "right"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.01742994785308838,
+        "margin_drop_random": 0.0005963854491710663
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/75396",
+        "cited": [
+          "israel",
+          "arabs"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.007662534713745117,
+        "margin_drop_random": 0.002555571496486664
+      },
+      {
+        "doc_id": "test/talk.politics.guns/54582",
+        "cited": [
+          "people",
+          "guns",
+          "fbi"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.004436612129211426,
+        "margin_drop_random": -0.0006510838866233826
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76258",
+        "cited": [
+          "people"
+        ],
+        "tokens": 12,
+        "margin_drop_cited": -0.004243135452270508,
+        "margin_drop_random": -0.003012198954820633
+      },
+      {
+        "doc_id": "train/sci.electronics/53777",
+        "cited": [
+          "pc"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0019828081130981445,
+        "margin_drop_random": -0.004816929344087839
+      },
+      {
+        "doc_id": "train/alt.atheism/53531",
+        "cited": [
+          "church"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0071713924407958984,
+        "margin_drop_random": -0.00029844045639038086
+      },
+      {
+        "doc_id": "test/misc.forsale/76667",
+        "cited": [
+          "condition"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.04144787788391113,
+        "margin_drop_random": 0.005328994244337082
+      },
+      {
+        "doc_id": "test/talk.politics.mideast/77312",
+        "cited": [
+          "jews",
+          "people"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.005593597888946533,
+        "margin_drop_random": 0.001763463020324707
+      },
+      {
+        "doc_id": "train/comp.sys.mac.hardware/51788",
+        "cited": [
+          "mac",
+          "apple",
+          "use"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.012583553791046143,
+        "margin_drop_random": 0.002154868096113205
+      },
+      {
+        "doc_id": "test/rec.sport.baseball/104872",
+        "cited": [
+          "year",
+          "team"
+        ],
+        "tokens": 12,
+        "margin_drop_cited": 0.004208922386169434,
+        "margin_drop_random": 0.005790790542960167
+      },
+      {
+        "doc_id": "train/comp.windows.x/67057",
+        "cited": [
+          "window"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.005330145359039307,
+        "margin_drop_random": 0.00845293141901493
+      },
+      {
+        "doc_id": "test/alt.atheism/53413",
+        "cited": [
+          "people"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0011404156684875488,
+        "margin_drop_random": 0.01909637451171875
+      },
+      {
+        "doc_id": "train/soc.religion.christian/21373",
+        "cited": [
+          "god",
+          "bible"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.008419275283813477,
+        "margin_drop_random": 0.0010939426720142365
+      },
+      {
+        "doc_id": "train/soc.religion.christian/21325",
+        "cited": [
+          "god",
+          "church",
+          "christ"
+        ],
+        "tokens": 13,
+        "margin_drop_cited": 0.0048809051513671875,
+        "margin_drop_random": 0.002453763037919998
+      },
+      {
+        "doc_id": "test/soc.religion.christian/21768",
+        "cited": [
+          "paul"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.0031432509422302246,
+        "margin_drop_random": 0.0016651563346385956
+      },
+      {
+        "doc_id": "train/rec.autos/101613",
+        "cited": [
+          "car",
+          "dealer"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.0036382675170898438,
+        "margin_drop_random": -0.0007912516593933105
+      },
+      {
+        "doc_id": "train/talk.politics.mideast/76104",
+        "cited": [
+          "israel",
+          "jews",
+          "people"
+        ],
+        "tokens": 7,
+        "margin_drop_cited": 0.012276411056518555,
+        "margin_drop_random": -8.310750126838684e-05
+      },
+      {
+        "doc_id": "test/rec.sport.hockey/54301",
+        "cited": [
+          "game"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": 0.002944350242614746,
+        "margin_drop_random": -0.0002220645546913147
+      },
+      {
+        "doc_id": "train/rec.autos/102836",
+        "cited": [
+          "car",
+          "speed"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": -0.00012630224227905273,
+        "margin_drop_random": -0.004181901924312115
+      },
+      {
+        "doc_id": "test/misc.forsale/76443",
+        "cited": [
+          "new",
+          "condition"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": 0.0091933012008667,
+        "margin_drop_random": 0.0049329400062561035
+      },
+      {
+        "doc_id": "train/sci.crypt/15716",
+        "cited": [
+          "encryption",
+          "privacy",
+          "nsa"
+        ],
+        "tokens": 6,
+        "margin_drop_cited": 0.10720980167388916,
+        "margin_drop_random": -0.005108814686536789
+      },
+      {
+        "doc_id": "test/talk.politics.mideast/77803",
+        "cited": [
+          "israel"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.04576832056045532,
+        "margin_drop_random": -0.004117690026760101
+      },
+      {
+        "doc_id": "train/sci.electronics/53706",
+        "cited": [
+          "mac",
+          "disk",
+          "apple"
+        ],
+        "tokens": 3,
+        "margin_drop_cited": 0.004919111728668213,
+        "margin_drop_random": -0.0016279220581054688
+      },
+      {
+        "doc_id": "train/sci.crypt/15394",
+        "cited": [
+          "mr",
+          "government",
+          "time"
+        ],
+        "tokens": 4,
+        "margin_drop_cited": -0.001412034034729004,
+        "margin_drop_random": -0.0013189116725698113
+      },
+      {
+        "doc_id": "test/sci.crypt/16045",
+        "cited": [
+          "used"
+        ],
+        "tokens": 1,
+        "margin_drop_cited": -0.0005638599395751953,
+        "margin_drop_random": 4.4504180550575256e-05
+      },
+      {
+        "doc_id": "train/comp.os.ms-windows.misc/9598",
+        "cited": [
+          "windows",
+          "xterm"
+        ],
+        "tokens": 2,
+        "margin_drop_cited": 0.04526257514953613,
+        "margin_drop_random": 0.001836756244301796
+      }
+    ]
+  },
+  "clustering_seeds": {
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "runs": {
+      "tfidf_lsa__hdbscan": {
+        "ari": {
+          "mean": 0.09503657333002337,
+          "std": 0.004361410992099514
+        },
+        "ari_assigned": {
+          "mean": 0.29077075868460006,
+          "std": 0.03185237354429895
+        },
+        "ari_core": {
+          "mean": 0.41969680619422095,
+          "std": 0.06069807966635474
+        },
+        "dbcv": {
+          "mean": 0.3642979968126581,
+          "std": 0.017073897423699528
+        },
+        "n_clusters": {
+          "mean": 45.333333333333336,
+          "std": 0.9428090415820634
+        },
+        "nmi": {
+          "mean": 0.401864418394774,
+          "std": 0.004643903107616161
+        },
+        "nmi_assigned": {
+          "mean": 0.45571925338903707,
+          "std": 0.0040447485694199
+        },
+        "nmi_core": {
+          "mean": 0.5590179681502727,
+          "std": 0.019951374429220892
+        },
+        "noise_rate": {
+          "mean": 0.3647552174761069,
+          "std": 0.021662226410285926
+        },
+        "purity": {
+          "mean": 0.418587868149015,
+          "std": 0.00319827594972025
+        },
+        "silhouette": {
+          "mean": 0.6452519496281942,
+          "std": 0.014748132227421487
+        }
+      },
+      "tfidf_lsa__kmeans": {
+        "ari": {
+          "mean": 0.2717889700452885,
+          "std": 0.001382166999675354
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.45214170391225844,
+          "std": 0.003930071879281448
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.4231324361224888,
+          "std": 0.007161715510054319
+        },
+        "silhouette": {
+          "mean": 0.4724966784318288,
+          "std": 0.005085521250250456
+        }
+      },
+      "tfidf_lsa__agglomerative": {
+        "ari": {
+          "mean": 0.26661250094091565,
+          "std": 0.0030564744749794724
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.4541425683638857,
+          "std": 0.00455408665601264
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.41981665691437486,
+          "std": 0.004777946238846139
+        },
+        "silhouette": {
+          "mean": 0.47284939885139465,
+          "std": 0.011929949353296734
+        }
+      },
+      "all-mpnet-base-v2__hdbscan": {
+        "ari": {
+          "mean": 0.26868426739365736,
+          "std": 0.04348626239047155
+        },
+        "ari_assigned": {
+          "mean": 0.31522411019597507,
+          "std": 0.09619750291351938
+        },
+        "ari_core": {
+          "mean": 0.34347804409675103,
+          "std": 0.13617338496546838
+        },
+        "dbcv": {
+          "mean": 0.3108068436521767,
+          "std": 0.14750812651473866
+        },
+        "n_clusters": {
+          "mean": 24.666666666666668,
+          "std": 6.79869268479038
+        },
+        "nmi": {
+          "mean": 0.5737609299317651,
+          "std": 0.007650768635984792
+        },
+        "nmi_assigned": {
+          "mean": 0.5914060105098,
+          "std": 0.011336802526717087
+        },
+        "nmi_core": {
+          "mean": 0.6299742560565971,
+          "std": 0.028757154746238568
+        },
+        "noise_rate": {
+          "mean": 0.12108445484688905,
+          "std": 0.051735561413736204
+        },
+        "purity": {
+          "mean": 0.4948117807684806,
+          "std": 0.058626579990237536
+        },
+        "silhouette": {
+          "mean": 0.5757922331492106,
+          "std": 0.02296564303918175
+        }
+      },
+      "all-mpnet-base-v2__kmeans": {
+        "ari": {
+          "mean": 0.5019108161738772,
+          "std": 0.0037592180398205014
+        },
+        "dbcv": {
+          "mean": -0.27494263025049687,
+          "std": 0.02715746541177462
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.6408647676826476,
+          "std": 0.004243929692879653
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.6334113516676418,
+          "std": 0.009237886387225341
+        },
+        "silhouette": {
+          "mean": 0.507774660984675,
+          "std": 0.023300506793080013
+        }
+      },
+      "all-mpnet-base-v2__agglomerative": {
+        "ari": {
+          "mean": 0.4981541111875604,
+          "std": 0.00397522591908357
+        },
+        "dbcv": {
+          "mean": -0.20366382352716958,
+          "std": 0.0761003460591983
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.6390502767594463,
+          "std": 0.0024824523332488716
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.6275014628437683,
+          "std": 0.008087607978078837
+        },
+        "silhouette": {
+          "mean": 0.5028261840343475,
+          "std": 0.007051744162180742
+        }
+      },
+      "bge-base-en-v1.5__hdbscan": {
+        "ari": {
+          "mean": 0.27315738225532676,
+          "std": 0.005324517136600567
+        },
+        "ari_assigned": {
+          "mean": 0.28679509141287585,
+          "std": 0.0009936370651864347
+        },
+        "ari_core": {
+          "mean": 0.29063745364309385,
+          "std": 0.0021714588246813044
+        },
+        "dbcv": {
+          "mean": 0.43861573953447647,
+          "std": 0.06202845134143173
+        },
+        "n_clusters": {
+          "mean": 17.333333333333332,
+          "std": 1.699673171197595
+        },
+        "nmi": {
+          "mean": 0.5979012202096424,
+          "std": 0.003059805572474984
+        },
+        "nmi_assigned": {
+          "mean": 0.6059949194831783,
+          "std": 0.004661699910563419
+        },
+        "nmi_core": {
+          "mean": 0.6513432666970553,
+          "std": 0.008872021391830675
+        },
+        "noise_rate": {
+          "mean": 0.09272479032572656,
+          "std": 0.013075725032017593
+        },
+        "purity": {
+          "mean": 0.4593134386580846,
+          "std": 0.019038971432971983
+        },
+        "silhouette": {
+          "mean": 0.6478945016860962,
+          "std": 0.009102112559581462
+        }
+      },
+      "bge-base-en-v1.5__kmeans": {
+        "ari": {
+          "mean": 0.5237334038642648,
+          "std": 0.005833288576488155
+        },
+        "dbcv": {
+          "mean": -0.4153075883958945,
+          "std": 0.08918827539189203
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.660378734117724,
+          "std": 0.002017630923055568
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.6743709771796372,
+          "std": 0.017058004511791562
+        },
+        "silhouette": {
+          "mean": 0.5101143817106882,
+          "std": 0.020378541061540998
+        }
+      },
+      "bge-base-en-v1.5__agglomerative": {
+        "ari": {
+          "mean": 0.52023253550944,
+          "std": 0.008647057544290189
+        },
+        "dbcv": {
+          "mean": -0.3647937275087467,
+          "std": 0.01026361779312051
+        },
+        "n_clusters": {
+          "mean": 20.0,
+          "std": 0.0
+        },
+        "nmi": {
+          "mean": 0.6622630207665846,
+          "std": 0.0011506231814748986
+        },
+        "noise_rate": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "purity": {
+          "mean": 0.6841232689682076,
+          "std": 0.004065851968359733
+        },
+        "silhouette": {
+          "mean": 0.47296087940533954,
+          "std": 0.003899862531828592
+        }
+      }
+    }
+  },
+  "targets": {
+    "nmi": {
+      "value": 0.6631135709303666,
+      "target": 0.55,
+      "pass": true
+    },
+    "faithfulness_flip_ratio": {
+      "value": 10.5,
+      "target": 2.0,
+      "pass": true
+    },
+    "plausibility_mean": {
+      "value": null,
+      "target": 3.5,
+      "pass": null
+    },
+    "plausibility_alpha": {
+      "value": null,
+      "target": 0.6,
+      "pass": null
+    },
+    "kg_label_preferred": {
+      "value": null,
+      "target": 0.6,
+      "pass": null
+    },
+    "triple_precision": {
+      "value": null,
+      "target": 0.75,
+      "pass": null
+    },
+    "ontology_conformance": {
+      "value": 0.8242552857030575,
+      "target": 0.95,
+      "pass": false
+    }
+  }
+}

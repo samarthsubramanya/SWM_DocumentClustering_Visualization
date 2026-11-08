@@ -225,10 +225,12 @@ def eval_text2cypher(questions_path: Path) -> dict:
 
     questions = yaml.safe_load(questions_path.read_text())["questions"]
     results = []
+    loop = asyncio.new_event_loop()      # one loop for all questions: the shared LLM client is bound to it
+    asyncio.set_event_loop(loop)
     for q in questions:
         gold = kg.read_query(q["gold"], MAX_ROWS + 1)
         t = time.time()
-        out = asyncio.run(text2cypher(q["question"]))
+        out = loop.run_until_complete(text2cypher(q["question"]))
         valid = out["rows"] is not None
         results.append({
             "id": q["id"], "pattern": q["pattern"], "question": q["question"],

@@ -176,17 +176,28 @@ def quoted_terms(text: str, terms) -> set[str]:
 
 
 def template_rationale(ev: dict, kg_entities=()) -> str:
-    """Deterministic rationale built only from evidence: no-LLM mode and LLM fallback."""
+    """Deterministic rationale built only from evidence: no-LLM mode and LLM fallback.
+    Says so plainly when the evidence does not support the assignment (margin <= 0, no terms)."""
     parts = [f"This document is in cluster {ev['cluster_id']}"
              + (" (HDBSCAN marked it noise; assigned to the nearest centroid)" if ev["is_noise"] else "") + "."]
     hits = [h["term"] for h in ev["term_hits"][:5]]
     if hits:
         parts.append("It uses the cluster's characteristic terms " + ", ".join(f'"{t}"' for t in hits) + ".")
+    else:
+        parts.append("None of the cluster's characteristic terms appear in it.")
     if ev.get("runner_up_cluster") is not None:
-        parts.append(
-            f"Its embedding is closer to this cluster's centroid (cosine {ev['own_centroid_sim']:.2f}) "
-            f"than to cluster {ev['runner_up_cluster']} ({ev['runner_up_sim']:.2f}), a margin of {ev['margin']:.2f}."
-        )
+        own, other, m = ev["own_centroid_sim"], ev["runner_up_sim"], ev["margin"]
+        if m is not None and m <= 0.005:
+            parts.append(
+                f"Its embedding is as close or closer to cluster {ev['runner_up_cluster']} ({other:.2f}) "
+                f"than to this cluster's centroid ({own:.2f}). The clustering placed it here, but the evidence "
+                "does not support this cluster over the runner-up: treat it as a borderline assignment."
+            )
+        else:
+            parts.append(
+                f"Its embedding is closer to this cluster's centroid (cosine {own:.2f}) "
+                f"than to cluster {ev['runner_up_cluster']} ({other:.2f}), a margin of {m:.2f}."
+            )
     if kg_entities:
         parts.append("Knowledge-graph entities: " + ", ".join(list(kg_entities)[:5]) + ".")
     return " ".join(parts)

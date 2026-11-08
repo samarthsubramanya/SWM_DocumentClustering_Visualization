@@ -7,7 +7,9 @@ button and the chat call an LLM.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -40,6 +42,10 @@ TYPE_COLORS = {
     "Person": "#e15759", "Organization": "#4e79a7", "Location": "#59a14f",
     "Event": "#f28e2b", "Artifact": "#b07aa1", "Topic": "#9c755f",
 }
+# Postal addresses from signatures / catalogue listings: kept in the graph, hidden in the view.
+ADDRESS_RE = re.compile(r"\b\d{5}(-\d{4})?\b|\b[a-z]\d[a-z]\s?\d[a-z]\d\b|,\s*[a-z]{2}\s+\d", re.I)
+GRAPH_MAX_NODES = 25
+WEAK_MARGIN = 0.15
 
 st.set_page_config(page_title="Explainable News Clustering", layout="wide")
 st.title("Explainable News Clustering")
@@ -80,6 +86,15 @@ def load_subgraph(run_id: str, cluster_id: int):
     return kg.cluster_subgraph(run_id, cluster_id)
 
 
+def show_gold() -> bool:
+    return bool(st.session_state.get("show_gold", False))
+
+
+def display_id(doc_id: str) -> str:
+    """Opaque id for the UI: real ids (train/sci.space/60151) carry the gold newsgroup."""
+    return doc_id if show_gold() else "doc-" + hashlib.sha1(doc_id.encode()).hexdigest()[:8]
+
+
 def doc_text(doc_id: str) -> dict | None:
     rows = db.query("SELECT text, label_name FROM documents WHERE id = %s", (doc_id,))
     return rows[0] if rows else None
@@ -91,6 +106,19 @@ def doc_text(doc_id: str) -> dict | None:
 
 def cluster_name(c: int, info: dict) -> str:
     return f"{c} — {info['label'] or ', '.join(t for t, _ in info['keywords'][:3])}"
+
+
+def readable_subgraph(nodes: list[dict], edges: list[dict]) -> tuple[list[dict], list[dict], int]:
+    """View-only filter: drop address-like entities, keep the most frequent ones and, when the
+    graph has relations, drop entities without any. Returns (nodes, edges, n_hidden)."""
+    kept = [n for n in nodes if not ADDRESS_RE.search(n["name"])]
+    kept = sorted(kept, key=lambda n: -n["freq"])[:GRAPH_MAX_NODES]
+    ids = {n["id"] for n in kept}
+    es = [e for e in edges if e["source"] in ids and e["target"] in ids]
+    linked = {e["source"] for e in es} | {e["target"] for e in es}
+    if len(linked) >= 5:  # enough structure to show; isolated nodes only add clutter
+        kept = [n for n in kept if n["id"] in linked or n["freq"] >= 3]
+    return kept, es, len(nodes) - len(kept)
 
 
 def pyvis_html(nodes: list[dict], edges: list[dict]) -> str:
@@ -114,10 +142,10 @@ def pyvis_html(nodes: list[dict], edges: list[dict]) -> str:
 
 def scatter(run_id: str, points: pd.DataFrame) -> None:
     st.subheader("Embedding map")
-    df = points.assign(cluster=points["cluster_id"].astype(str))
+    df = points.assign(cluster=points["cluster_id"].astype(str), doc=points["doc_id"].map(display_id))
     fig = px.scatter(
         df, x="x", y="y", color="cluster", custom_data=["doc_id"],
-        hover_data={"doc_id": True, "label_name": True, "x": False, "y": False},
+        hover_data={"doc": True, "cluster": True, "label_name": show_gold(), "doc_id": False, "x": False, "y": False},
         render_mode="webgl", height=560,
     )
     fig.update_traces(marker={"size": 3})
@@ -136,8 +164,12 @@ def cluster_panel(run_id: str, clusters: dict[int, dict], cluster_id: int) -> No
                  horizontal=True, height=260, sort=False)
     nodes, edges, source = load_subgraph(run_id, cluster_id)
     if nodes:
+        nodes, edges, hidden = readable_subgraph(nodes, edges)
         components.html(pyvis_html(nodes, edges), height=480)
-        st.caption(f"Knowledge graph source: {source}")
+        legend = " ".join(f'<span style="color:{c}">●</span> {t}' for t, c in TYPE_COLORS.items())
+        st.markdown(legend, unsafe_allow_html=True)
+        st.caption(f"Top {len(nodes)} entities by document frequency ({hidden} more hidden: addresses, "
+                   f"unconnected or rare). Node size = documents mentioning it. Source: {source}.")
     else:
         st.info("No knowledge graph for this cluster yet; run scripts/05_kg.py for this run.")
 
@@ -149,18 +181,30 @@ def explanation_card(run_id: str, doc_id: str) -> None:
         st.info(str(exc))
         return
 
-    st.markdown(f"**{doc_id}** → cluster {ev['cluster_id']}"
+    st.markdown(f"**{display_id(doc_id)}** → cluster {ev['cluster_id']}"
                 + (" *(noise, assigned to nearest centroid)*" if ev["is_noise"] else ""))
+    hits_n = len(ev["term_hits"])
+    weak = ev["margin"] is not None and ev["margin"] < WEAK_MARGIN or hits_n <= 1
+    strength = "weak" if weak else "strong"
+    margin_txt = "-" if ev["margin"] is None else ("0.00" if abs(ev["margin"]) < 0.005 else f"{ev['margin']:.2f}")
+    plural = "s" if hits_n != 1 else ""
+    (st.warning if weak else st.success)(
+        f"Evidence: **{strength}** ({hits_n} cluster term{plural} in the text, "
+        f"margin {margin_txt}; weak = margin < {WEAK_MARGIN} or ≤ 1 term). "
+        "Weak assignments are the ones most likely to change when evidence is removed.")
     c1, c2, c3 = st.columns(3)
     c1.metric("Cosine to centroid", f"{ev['own_centroid_sim']:.2f}")
-    c2.metric("Margin vs runner-up", "–" if ev["margin"] is None else f"{ev['margin']:.2f}",
+    c2.metric("Margin vs runner-up", margin_txt,
               help=f"Runner-up cluster: {ev['runner_up_cluster']}")
-    c3.metric("Membership prob.", "–" if ev["membership_prob"] is None else f"{ev['membership_prob']:.2f}")
+    if ev["membership_prob"] is not None:
+        c3.metric("Membership prob.", f"{ev['membership_prob']:.2f}")
+    else:
+        c3.metric("Membership prob.", "n/a", help="Only density-based (HDBSCAN) runs give membership probabilities.")
 
     hits = ", ".join(f"`{h['term']}`×{h['count']}" for h in ev["term_hits"][:10])
     st.markdown(f"**Cluster terms in this document:** {hits or 'none'}")
     st.markdown("**Nearest exemplars:** " + (", ".join(
-        f"`{e['doc_id']}` ({e['similarity']:.2f})" for e in ev["exemplars"]) or "none"))
+        f"`{display_id(e['doc_id'])}` ({e['similarity']:.2f})" for e in ev["exemplars"]) or "none"))
 
     entities = kg.doc_entities(doc_id)
     if entities:
@@ -174,7 +218,9 @@ def explanation_card(run_id: str, doc_id: str) -> None:
             st.write(explain.rationale(doc_id, run_id, kg_entities=entities))
 
     if doc := doc_text(doc_id):
-        with st.expander(f"Document text ({doc['label_name']})"):
+        with st.expander("Document text"):
+            if show_gold():
+                st.caption(f"Gold newsgroup (reference only, never used by the pipeline): {doc['label_name']}")
             st.text(doc["text"][:5000])
 
 
@@ -192,20 +238,31 @@ def dashboard() -> None:
                               index=run_ids.index(default) if default in run_ids else 0)
         with st.expander("All runs"):
             st.dataframe(runs.set_index("run_id").round(3))
+        st.toggle("Show gold newsgroups", key="show_gold",
+                  help="Reveal the 20 Newsgroups labels in ids and hovers. Off by default: the pipeline "
+                       "never sees them, and the views should not either.")
 
+    st.caption(f"Run: `{run_id}` · labels are used only for the scores below")
     metrics = runs.set_index("run_id").loc[run_id]
-    cols = st.columns(5)
-    for col, key in zip(cols, ("nmi", "ari", "purity", "silhouette", "noise_rate")):
+    keys = ("nmi", "ari", "purity", "silhouette", "dbcv", "noise_rate")
+    names = {"noise_rate": "Noise", "dbcv": "DBCV"}
+    helps = {"silhouette": "Assumes convex clusters; favours k-means / agglomerative.",
+             "dbcv": "Density-based validity (no labels); favours HDBSCAN-style clusters."}
+    for col, key in zip(st.columns(len(keys)), keys):
         value = metrics.get(key)
-        col.metric(key.upper() if key != "noise_rate" else "Noise", "–" if pd.isna(value) else f"{value:.3f}")
+        col.metric(names.get(key, key.upper()), "–" if value is None or pd.isna(value) else f"{value:.3f}",
+                   help=helps.get(key))
 
     points, clusters = load_points(run_id), load_clusters(run_id)
+    st.session_state.setdefault("doc_id", "")
     left, right = st.columns([3, 2])
     with left:
         scatter(run_id, points)
-        doc_id = st.text_input("Document id", value=st.session_state.get("doc_id", ""),
-                               placeholder="click a point or type e.g. train/sci.space/60151")
-        st.session_state.doc_id = doc_id.strip()
+        shown = display_id(st.session_state["doc_id"]) if st.session_state.get("doc_id") else ""
+        typed = st.text_input("Document", value=shown, placeholder="click a point, or paste a doc-… id").strip()
+        if typed != shown:
+            by_display = dict(zip(points["doc_id"].map(display_id), points["doc_id"]))
+            st.session_state.doc_id = by_display.get(typed, typed)
 
     selected = points.loc[points["doc_id"] == st.session_state.doc_id, "cluster_id"]
     options = sorted(clusters)

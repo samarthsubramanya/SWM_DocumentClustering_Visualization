@@ -80,9 +80,9 @@ def test_label_helpers():
 def test_duplicate_rate_and_targets():
     ents = [{"type": "Organization", "name": n} for n in ("NASA", "nasa.", "The NASA", "esa")]
     assert ev.duplicate_rate(ents) == 0.5
-    t = ev.check_targets({"best_nmi": 0.6, "faithfulness": {"margin_ratio": 1.5},
+    t = ev.check_targets({"best_nmi": 0.6, "faithfulness": {"flip_ratio": 1.5},
                           "kg": {"ontology_conformance": 0.97}})
-    assert t["nmi"]["pass"] and not t["faithfulness_ratio"]["pass"] and t["triple_precision"]["pass"] is None
+    assert t["nmi"]["pass"] and not t["faithfulness_flip_ratio"]["pass"] and t["triple_precision"]["pass"] is None
 
 
 def test_cached_extract_never_calls_llm(tmp_path, monkeypatch):

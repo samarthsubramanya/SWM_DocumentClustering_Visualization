@@ -23,7 +23,7 @@ from swm.represent import CACHE
 
 TEXT_CAP = 2500  # chars; roughly what the SBERT encoders see (mpnet 384 tokens), so edits beyond it are invisible
 TARGETS = {  # PLAN.md section 5
-    "nmi": 0.55, "faithfulness_ratio": 2.0, "plausibility_mean": 3.5, "plausibility_alpha": 0.6,
+    "nmi": 0.55, "faithfulness_flip_ratio": 2.0, "plausibility_mean": 3.5, "plausibility_alpha": 0.6,
     "kg_label_preferred": 0.6, "triple_precision": 0.75, "ontology_conformance": 0.95,
 }
 
@@ -79,6 +79,13 @@ def random_terms(text: str, n_tokens: int, exclude, rng: random.Random) -> list[
             if left == 0:
                 return picked
     return []
+
+
+def bootstrap_mean_ci(x: np.ndarray, n: int = 2000, seed: int = 42) -> tuple[float, float]:
+    """95% bootstrap CI for mean(x)."""
+    idx = np.random.default_rng(seed).integers(0, len(x), size=(n, len(x)))
+    m = x[idx].mean(axis=1)
+    return float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
 
 
 def bootstrap_ratio_ci(a: np.ndarray, b: np.ndarray, n: int = 2000, seed: int = 42) -> tuple[float, float] | None:
@@ -137,6 +144,13 @@ def faithfulness(items: list[dict], cids, C, encode: Callable, draws: int = 3, s
     def ratio(a, b):
         return float(a.mean() / b.mean()) if b.mean() > 0 else None
 
+    # Flips only count where the nearest-centroid rule agreed with the stored assignment before
+    # any deletion; for agglomerative runs some docs already sit nearer another centroid.
+    base_ok = mar[:, 0] > 0
+    flips_c = float((mar[base_ok, 1] < 0).mean()) if base_ok.any() else None
+    flips_r = float((mar[base_ok][:, 2:] < 0).mean()) if base_ok.any() else None
+    diff = d_mar_cited - d_mar_rand
+
     try:
         p_value = float(wilcoxon(d_mar_cited, d_mar_rand, alternative="greater").pvalue)
     except ValueError:  # all differences zero
@@ -154,6 +168,10 @@ def faithfulness(items: list[dict], cids, C, encode: Callable, draws: int = 3, s
         "frac_cited_hurts_more": float((d_mar_cited > d_mar_rand).mean()),
         "assignment_flips_cited": float((mar[:, 1] < 0).mean()),
         "assignment_flips_random": float((mar[:, 2:] < 0).mean()),
+        "base_margin_negative": float((~base_ok).mean()),
+        "flips_cited_base_ok": flips_c, "flips_random_base_ok": flips_r,
+        "flip_ratio": (flips_c / flips_r) if flips_c is not None and flips_r else None,
+        "margin_drop_diff_mean": float(diff.mean()), "margin_drop_diff_ci95": bootstrap_mean_ci(diff, seed=seed),
         "per_doc": [{"doc_id": it["doc_id"], "cited": it["cited"], "tokens": n, "margin_drop_cited": float(a),
                      "margin_drop_random": float(b)} for it, n, a, b in zip(kept, tokens, d_mar_cited, d_mar_rand)],
     }
@@ -344,16 +362,11 @@ def check_targets(report: dict) -> dict[str, dict]:
     f, p, t, lab = (report.get(k) or {} for k in ("faithfulness", "plausibility", "triples", "labels"))
     kg = report.get("kg") or {}
     values = {
-        "nmi": report.get("best_nmi"), "faithfulness_ratio": f.get("margin_ratio"),
+        "nmi": report.get("best_nmi"), "faithfulness_flip_ratio": f.get("flip_ratio"),
         "plausibility_mean": p.get("mean"), "plausibility_alpha": p.get("krippendorff_alpha"),
         "kg_label_preferred": (lab.get("kg_vs_ctfidf") or {}).get("preferred"), "triple_precision": t.get("precision"),
         "ontology_conformance": kg.get("ontology_conformance"),
     }
     out = {k: {"value": v, "target": TARGETS[k], "pass": None if v is None else v >= TARGETS[k]}
            for k, v in values.items()}
-    # Random deletions that do not lower the margin at all make the ratio undefined; cited
-    # deletions that do lower it then beat random by any factor.
-    if f and f.get("margin_ratio") is None and f.get("n"):
-        if f["margin_drop_cited"] > 0 >= f["margin_drop_random"]:
-            out["faithfulness_ratio"] |= {"value": "inf (random drop <= 0)", "pass": True}
     return out

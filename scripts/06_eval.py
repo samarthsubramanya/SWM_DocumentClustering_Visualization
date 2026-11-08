@@ -295,7 +295,12 @@ def markdown(r: dict) -> str:
                 f"- centroid-margin drop: cited {f(fa['margin_drop_cited'])} vs random "
                 f"{f(fa['margin_drop_random'])} (ratio {f(fa['margin_ratio'])}, 95% CI {fa.get('margin_ratio_ci95')}, "
                 f"Wilcoxon p {fa.get('wilcoxon_p_cited_greater')})",
-                f"- median per-doc difference (cited - random margin drop): {f(fa.get('margin_drop_diff_median'))}",
+                f"- median per-doc difference (cited - random margin drop): {f(fa.get('margin_drop_diff_median'))}; "
+                f"mean {f(fa.get('margin_drop_diff_mean'))}, 95% CI {fa.get('margin_drop_diff_ci95')}",
+                f"- assignment flips among docs whose nearest centroid was their own cluster "
+                f"({f(1 - fa['base_margin_negative']) if fa.get('base_margin_negative') is not None else 'n/a'} of docs): "
+                f"cited {f(fa.get('flips_cited_base_ok'))} vs random {f(fa.get('flips_random_base_ok'))} "
+                f"(flip ratio {f(fa.get('flip_ratio'))}; target >= 2)",
                 f"- own-centroid cosine drop: cited {f(fa['sim_drop_cited'])} vs random {f(fa['sim_drop_random'])} "
                 f"(ratio {f(fa['sim_ratio'])})", f"- docs where cited hurts more: {f(fa['frac_cited_hurts_more'])}",
                 f"- assignment flips (margin < 0): cited {f(fa['assignment_flips_cited'])} vs random "

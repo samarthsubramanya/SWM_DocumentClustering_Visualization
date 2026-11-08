@@ -92,7 +92,7 @@ class Extraction(BaseModel):
 
 
 # Bump when the prompt or schema changes: older cached extractions are then ignored.
-EXTRACTION_VERSION = 3  # bump whenever the prompt or ontology descriptors change
+EXTRACTION_VERSION = 4  # bump whenever the prompt or ontology descriptors change
 
 
 def _prompt(onto: dict, text: str) -> str:
@@ -110,7 +110,10 @@ Relation types (source type -> target type):
 Rules:
 - Only entities explicitly named in the text; use the exact surface form.
 - At most 15 entities and 10 relations.
-- Every relation's source and target must be entity names you listed, with matching types.
+- Every relation's source and target must be copied exactly from the entity names you listed.
+- Use a relation only if BOTH types match its "source type -> target type" line; otherwise leave it out.
+  Never stretch a relation to connect two entities that it does not fit.
+- partOf needs the same kind on both sides (Organization in Organization, Artifact in Artifact).
 - If nothing fits, return empty lists.
 
 Document:
@@ -121,6 +124,12 @@ Document:
 def _clean(s) -> str:
     return " ".join(str(s or "").split())
 
+def _key(name) -> str:
+    """Loose match key for relation endpoints: case, a leading 'the', a trailing possessive,
+    stray punctuation ("NASA's" / "the NASA" / "NASA" match)."""
+    k = re.sub(r"^the\s+", "", _clean(name).lower())
+    k = re.sub(r"['\u2019]s$", "", k)
+    return re.sub(r"[^\w\s&+./-]", "", k).strip(" .")
 
 def validate(raw: dict, onto: dict, doc_id: str, reasons: Counter | None = None
              ) -> tuple[list[dict], list[dict], int]:
@@ -142,20 +151,21 @@ def validate(raw: dict, onto: dict, doc_id: str, reasons: Counter | None = None
         elif name.lower() in ENGLISH_STOP_WORDS:
             why["entity: stop word / pronoun"] += 1
         else:
-            ents[name.lower()] = (name, etype)
+            ents[_key(name)] = (name, etype)
             continue
         rejected += 1
 
     relations = []
     for r in raw.get("relations", []):
         spec = rels.get(r.get("relation"))
-        s = ents.get(_clean(r.get("source")).lower())
-        t = ents.get(_clean(r.get("target")).lower())
+        s = ents.get(_key(r.get("source")))
+        t = ents.get(_key(r.get("target")))
         if not spec:
             why["relation: not in ontology"] += 1
         elif not (s and t):
             why["relation: endpoint not a kept entity"] += 1
-        elif not (s[1] in spec["source"] and t[1] in spec["target"]):
+        elif not (s[1] in spec["source"] and t[1] in spec["target"]) or (
+                r["relation"] == "partOf" and s[1] != t[1]):
             why["relation: wrong source/target type"] += 1
         else:
             relations.append({"source": s[0], "source_type": s[1], "relation": r["relation"],
@@ -502,21 +512,28 @@ def cluster_graph(cluster_docs, entities: list[dict], relations: list[dict], ont
 # Usenet artefacts that PageRank would otherwise surface as "topics": e-mail addresses,
 # hostnames, bare dates/years, and one-token poster names ("mathew", "lew").
 _LABEL_JUNK = re.compile(
-    r"@|\b[\w-]+\.(com|edu|org|net|gov|mil|uk|de|ca|au)\b"   # mail / host
-    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b"                         # 4/15/93
-    r"|\b(1[0-9]|20)\d\d\b|\b\d{2,4}'?s\b"                 # years, 1980's
-    r"|^[\d\W_]+$",                                          # only digits / punctuation
+    r"@|\b[\w-]+(\.[\w-]+)*\.(com|edu|org|net|gov|mil|[a-z]{2})\b"  # mail / hostnames, any country domain
+    r"|^(alt|comp|sci|rec|talk|misc|soc|news)\s*\."                # newsgroup names: they leak the gold label
+    r"|\bpub/|^/|\bftp\b"                                          # FTP paths
+    r"|\.(exe|zip|gz|tar|z|txt|gif|jpg|bmp|ps|doc)\b"              # file names
+    r"|\b(university|college)\b"                                    # poster affiliations from signatures
+    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b"                                 # 4/15/93
+    r"|\b(1[0-9]|20)\d\d\b|\b\d{2,4}'?s\b"                          # years, 1980's
+    r"|^[\d\W_]+$",                                                 # only digits / punctuation
     re.I,
 )
-_LABEL_STOP = {"group", "copy", "guy", "desk", "post", "posts", "posters", "thing", "people", "article"}
-
+_LABEL_STOP = {"group", "copy", "guy", "desk", "post", "posts", "posters", "thing", "people", "article",
+               "company", "government", "system", "software", "computer", "internet", "usenet", "net",
+               "newsgroup", "mit", "cmu", "ucla", "uiuc", "ucb"}
 
 def label_candidate(name: str, etype: str) -> bool:
     """Whether an entity may appear in a cluster label (it stays in the graph either way)."""
     n = name.strip().lower()
     if len(n) < 3 or n in _LABEL_STOP or _LABEL_JUNK.search(n):
         return False
-    return not (etype == "Person" and len(n.split()) < 2)  # single-token person = poster handle
+    # People stay in the graph but not in labels: in Usenet most named people are posters
+    # (signatures, attributions), and a cluster label should name the topic, not who posted.
+    return etype != "Person"
 
 
 def pagerank_label(G: nx.DiGraph, top_term: str | None = None, k: int = 3) -> str:

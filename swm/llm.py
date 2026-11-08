@@ -96,7 +96,7 @@ def _chat(model: str | None = None):
     if model not in _CHATS:
         with _CHAT_LOCK:
             if model not in _CHATS:
-                _CHATS[model] = build_chat(num_predict=1024, model=model)
+                _CHATS[model] = build_chat(num_predict=int(os.getenv("LLM_MAX_TOKENS", "2048")), model=model)
     return _CHATS[model]
 
 

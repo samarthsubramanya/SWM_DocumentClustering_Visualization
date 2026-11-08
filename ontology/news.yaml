@@ -20,17 +20,29 @@ relations:
     target: Organization
     descriptor: The person is a member of, works for, or represents the organization.
   locatedIn:
-    source: [Organization, Event]
+    source: [Organization, Event, Location]
     target: Location
-    descriptor: The organization or event is based in or takes place at the location.
+    descriptor: The organization or event is based in or takes place at the location, or one place lies within another.
   participatesIn:
     source: [Person, Organization]
     target: Event
     descriptor: The person or organization takes part in the event.
   produces:
-    source: Organization
+    source: [Organization, Person]
     target: Artifact
-    descriptor: The organization makes, sells, or maintains the artifact.
+    descriptor: The organization or person makes, writes, develops, sells, or maintains the artifact.
+  partOf:
+    source: [Organization, Artifact]
+    target: [Organization, Artifact]
+    descriptor: A unit of a larger organization, or a component or version of a larger artifact (same kind on both sides).
+  worksWith:
+    source: Artifact
+    target: Artifact
+    descriptor: The artifact runs on, connects to, or is used together with the other artifact.
+  discusses:
+    source: [Person, Organization]
+    target: Topic
+    descriptor: The person or organization argues about, asks about, or takes a position on the topic.
   about:
     source: Document
     target: Topic

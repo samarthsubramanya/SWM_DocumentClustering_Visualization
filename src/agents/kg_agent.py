@@ -110,4 +110,14 @@ async def run(query: str) -> dict[str, Any]:
         "If there are no rows, say no matching data was found.\n"
         f"Question: {query}\nCypher: {result['cypher']}\nRows: {json.dumps(rows, default=str)}"
     )
-    return {"answer": summary.content, "metadata": {**meta, "rows": rows}}
+    # A reasoning model can spend its whole output budget thinking and return no text; the rows
+    # are already the answer, so list them rather than fail the request.
+    return {"answer": summary.content.strip() or rows_answer(rows), "metadata": {**meta, "rows": rows}}
+
+
+def rows_answer(rows: list[dict], shown: int = 20) -> str:
+    if not rows:
+        return "No matching data was found."
+    lines = [", ".join(str(v) for v in r.values()) for r in rows[:shown]]
+    more = f"\n- … and {len(rows) - shown} more" if len(rows) > shown else ""
+    return f"{len(rows)} result{'s' if len(rows) != 1 else ''}:\n- " + "\n- ".join(lines) + more

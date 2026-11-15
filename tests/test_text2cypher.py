@@ -32,3 +32,11 @@ def test_gold_sets_are_well_formed():
             assert q["id"] not in ids
             ids.add(q["id"])
     assert len(ids) == 30
+
+
+def test_empty_llm_summary_falls_back_to_rows():
+    from src.agents.kg_agent import rows_answer
+
+    assert rows_answer([]) == "No matching data was found."
+    text = rows_answer([{"d.cluster_id": i} for i in range(25)], shown=20)
+    assert text.startswith("25 results:") and "… and 5 more" in text

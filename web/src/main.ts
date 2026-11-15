@@ -31,6 +31,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/explore' },
     { path: '/explore', component: () => import('./views/ExploreView.vue'), meta: { title: 'Explore' } },
+    { path: '/ask', component: () => import('./views/AskView.vue'), meta: { title: 'Ask the agents' } },
   ],
 })
 

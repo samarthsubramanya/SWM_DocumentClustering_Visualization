@@ -614,10 +614,43 @@ def graphml_path(run_id: str, cluster_id: int) -> Path:
     return CACHE / "graphml" / run_id / f"{int(cluster_id)}.graphml"
 
 
+CLUSTER_DOCS_QUERY = """
+MATCH (d:Document {run_id: $run, cluster_id: $cid})-[m]->(e)
+RETURN d.id AS doc, type(m) AS relation, labels(e)[0] AS type, e.name AS name
+"""
+CLUSTER_RELATIONS_QUERY = """
+MATCH (:Document {run_id: $run, cluster_id: $cid})-->(e)
+WITH collect(DISTINCT e) AS ents
+UNWIND ents AS a
+MATCH (a)-[r]->(b) WHERE b IN ents
+RETURN labels(a)[0] AS source_type, a.name AS source, type(r) AS relation, labels(b)[0] AS target_type, b.name AS target
+"""
+
+
 def load_graphml(run_id: str, cluster_id: int) -> nx.DiGraph | None:
-    """The full cluster graph (documents included) written by 05_kg.py, or None."""
+    """The full cluster graph (documents included): the GraphML export written by 05_kg.py,
+    else rebuilt from Neo4j (the export is a local file; a cloud graph has none). None if neither."""
+    from neo4j.exceptions import DriverError, Neo4jError
+
     path = graphml_path(run_id, cluster_id)
-    return nx.read_graphml(path) if path.exists() else None
+    if path.exists():
+        return nx.read_graphml(path)
+    try:
+        docs, _, _ = driver().execute_query(CLUSTER_DOCS_QUERY, run=run_id, cid=int(cluster_id))
+        rels, _, _ = driver().execute_query(CLUSTER_RELATIONS_QUERY, run=run_id, cid=int(cluster_id))
+    except (DriverError, Neo4jError):
+        return None
+    if not docs:
+        return None
+    G = nx.DiGraph()
+    for r in docs:   # same node ids and attributes as cluster_graph / the GraphML export
+        node, doc = f'{r["type"]}:{r["name"]}', f'Document:{r["doc"]}'
+        G.add_node(node, kind="entity", type=r["type"], name=r["name"])
+        G.add_node(doc, kind="document", type="Document", name=r["doc"])
+        G.add_edge(doc, node, relation=r["relation"])
+    for r in rels:
+        G.add_edge(f'{r["source_type"]}:{r["source"]}', f'{r["target_type"]}:{r["target"]}', relation=r["relation"])
+    return G
 
 
 def export_graphml(G: nx.DiGraph, run_id: str, cluster_id: int) -> None:

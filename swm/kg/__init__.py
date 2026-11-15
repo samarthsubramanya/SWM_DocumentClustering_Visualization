@@ -544,8 +544,16 @@ def pagerank_label(G: nx.DiGraph, top_term: str | None = None, k: int = 3) -> st
     Ties are common when a cluster has few documents (every entity seen once has the same
     score), so they break by document frequency, never by name order.
     """
-    if G.number_of_nodes() == 0:
+    top = [G.nodes[n]["name"] for n in top_entities(G, k)]
+    if not top:
         return top_term or ""
+    return " · ".join(top) + (f" ({top_term})" if top_term else "")
+
+
+def top_entities(G: nx.DiGraph, k: int = 3) -> list[str]:
+    """Node ids of the k label-worthy entities with the highest PageRank: the cluster's core."""
+    if G.number_of_nodes() == 0:
+        return []
     U = G.to_undirected()
     pr = nx.pagerank(U)
     def doc_freq(n):
@@ -553,10 +561,39 @@ def pagerank_label(G: nx.DiGraph, top_term: str | None = None, k: int = 3) -> st
     nodes = [n for n in G if G.nodes[n]["kind"] == "entity"
              and label_candidate(G.nodes[n]["name"], G.nodes[n].get("type", ""))]
     nodes.sort(key=lambda n: (-round(pr[n], 9), -doc_freq(n), n))
-    top = list(dict.fromkeys(G.nodes[n]["name"] for n in nodes))[:k]  # same name under two types counts once
-    if not top:
-        return top_term or ""
-    return " · ".join(top) + (f" ({top_term})" if top_term else "")
+    by_name = {}
+    for n in nodes:                       # same name under two types counts once
+        by_name.setdefault(G.nodes[n]["name"], n)
+    return list(by_name.values())[:k]
+
+
+def _words(text: str) -> str:
+    return " " + re.sub(r"[^a-z0-9]+", " ", text.lower()).strip() + " "
+
+
+def path_to_core(G: nx.DiGraph, doc_id: str, text: str, k: int = 3) -> dict:
+    """How a post connects to its cluster's core: the shortest path in the cluster graph from the
+    post to one of the top-k PageRank entities.
+
+    Only ~30 posts per cluster were extracted; any other post enters the graph through the
+    cluster entities its text names (whole-word match). Returns node ids:
+    {"core": [...], "mentions": [...], "path": [...] or None}.
+    """
+    core = top_entities(G, k)
+    doc = f"Document:{doc_id}"
+    if doc in G:
+        mentions, starts = list(G.successors(doc)), {doc}
+    else:
+        words = _words(text)
+        mentions = [n for n, a in G.nodes(data=True)
+                    if a.get("kind") == "entity" and len(a["name"]) >= 3 and _words(a["name"]) in words]
+        starts = set(mentions)
+    path = None
+    if starts and core:
+        dist, paths = nx.multi_source_dijkstra(G.to_undirected(), starts)
+        if reached := [c for c in core if c in dist]:
+            path = paths[min(reached, key=dist.get)]
+    return {"core": core, "mentions": mentions, "path": path}
 
 
 def degree_label(G: nx.DiGraph, k: int = 3) -> str:
@@ -575,6 +612,12 @@ def label_entities(label: str) -> str:
 
 def graphml_path(run_id: str, cluster_id: int) -> Path:
     return CACHE / "graphml" / run_id / f"{int(cluster_id)}.graphml"
+
+
+def load_graphml(run_id: str, cluster_id: int) -> nx.DiGraph | None:
+    """The full cluster graph (documents included) written by 05_kg.py, or None."""
+    path = graphml_path(run_id, cluster_id)
+    return nx.read_graphml(path) if path.exists() else None
 
 
 def export_graphml(G: nx.DiGraph, run_id: str, cluster_id: int) -> None:

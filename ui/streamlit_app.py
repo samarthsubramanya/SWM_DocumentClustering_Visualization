@@ -86,6 +86,11 @@ def load_subgraph(run_id: str, cluster_id: int):
     return kg.cluster_subgraph(run_id, cluster_id)
 
 
+@st.cache_resource
+def load_graph(run_id: str, cluster_id: int):
+    return kg.load_graphml(run_id, cluster_id)
+
+
 def show_gold() -> bool:
     return bool(st.session_state.get("show_gold", False))
 
@@ -108,20 +113,22 @@ def cluster_name(c: int, info: dict) -> str:
     return f"{c} — {info['label'] or ', '.join(t for t, _ in info['keywords'][:3])}"
 
 
-def readable_subgraph(nodes: list[dict], edges: list[dict]) -> tuple[list[dict], list[dict], int]:
+def readable_subgraph(nodes: list[dict], edges: list[dict], keep=frozenset()) -> tuple[list[dict], list[dict], int]:
     """View-only filter: drop address-like entities, keep the most frequent ones and, when the
-    graph has relations, drop entities without any. Returns (nodes, edges, n_hidden)."""
+    graph has relations, drop entities without any. Nodes in `keep` (the selected post's
+    entities) always stay. Returns (nodes, edges, n_hidden)."""
     kept = [n for n in nodes if not ADDRESS_RE.search(n["name"])]
     kept = sorted(kept, key=lambda n: -n["freq"])[:GRAPH_MAX_NODES]
+    kept += [n for n in nodes if n["id"] in keep and n not in kept]
     ids = {n["id"] for n in kept}
     es = [e for e in edges if e["source"] in ids and e["target"] in ids]
     linked = {e["source"] for e in es} | {e["target"] for e in es}
     if len(linked) >= 5:  # enough structure to show; isolated nodes only add clutter
-        kept = [n for n in kept if n["id"] in linked or n["freq"] >= 3]
+        kept = [n for n in kept if n["id"] in linked or n["freq"] >= 3 or n["id"] in keep]
     return kept, es, len(nodes) - len(kept)
 
 
-def pyvis_html(nodes: list[dict], edges: list[dict]) -> str:
+def pyvis_html(nodes: list[dict], edges: list[dict], highlight=frozenset()) -> str:
     from pyvis.network import Network
 
     net = Network(height="460px", width="100%", directed=True, cdn_resources="in_line")
@@ -129,10 +136,13 @@ def pyvis_html(nodes: list[dict], edges: list[dict]) -> str:
     # auto-fit zoom doesn't shrink labels to nothing.
     net.barnes_hut(gravity=-2500, central_gravity=1.2, spring_length=90)
     for n in nodes:
+        color = TYPE_COLORS.get(n["type"], "#999999")
+        mine = n["id"] in highlight   # named by the selected post: dark ring
         net.add_node(n["id"], label=n["name"], title=f'{n["type"]} · {n["freq"]} docs',
-                     color=TYPE_COLORS.get(n["type"], "#999999"),
+                     color={"background": color, "border": "#111111" if mine else color},
+                     borderWidth=4 if mine else 1,
                      # explicit size: vis.js hides labels of small `value`-scaled nodes
-                     size=10 + 3 * min(n["freq"], 10), font={"size": 14})
+                     size=10 + 3 * min(n["freq"], 10), font={"size": 16 if mine else 14})
     ids = {n["id"] for n in nodes}
     for e in edges:
         if e["source"] in ids and e["target"] in ids:
@@ -188,24 +198,58 @@ def scatter(run_id: str, points: pd.DataFrame, clusters: dict[int, dict], cluste
                     key=f"scatter-{run_id}", width="stretch")
 
 
-def cluster_panel(run_id: str, clusters: dict[int, dict], cluster_id: int) -> None:
+def cluster_panel(run_id: str, clusters: dict[int, dict], cluster_id: int, highlight=frozenset()) -> None:
     info = clusters[cluster_id]
     st.markdown(f"**{info['label'] or 'Unlabeled (run 05_kg.py)'}** · {info['size']} docs")
     st.bar_chart(pd.DataFrame(info["keywords"][:10], columns=["term", "weight"]).set_index("term"),
                  horizontal=True, height=260, sort=False)
     nodes, edges, source = load_subgraph(run_id, cluster_id)
     if nodes:
-        nodes, edges, hidden = readable_subgraph(nodes, edges)
-        components.html(pyvis_html(nodes, edges), height=480)
+        nodes, edges, hidden = readable_subgraph(nodes, edges, keep=highlight)
+        components.html(pyvis_html(nodes, edges, highlight), height=480)
         legend = " ".join(f'<span style="color:{c}">●</span> {t}' for t, c in TYPE_COLORS.items())
         st.markdown(legend, unsafe_allow_html=True)
         st.caption(f"Top {len(nodes)} entities by document frequency ({hidden} more hidden: addresses, "
-                   f"unconnected or rare). Node size = documents mentioning it. Source: {source}.")
+                   f"unconnected or rare). Node size = documents mentioning it. Source: {source}."
+                   + (" Dark rings mark the entities the selected post names." if highlight else ""))
     else:
         st.info("No knowledge graph for this cluster yet; run scripts/05_kg.py for this run.")
 
 
-def explanation_card(run_id: str, doc_id: str) -> None:
+def post_link(run_id: str, doc_id: str, cluster_id: int) -> tuple[Any, dict] | None:
+    """(cluster graph, kg.path_to_core result) for the selected post, or None without a graph."""
+    G, doc = load_graph(run_id, cluster_id), doc_text(doc_id)
+    return (G, kg.path_to_core(G, doc_id, doc["text"])) if G is not None and doc else None
+
+
+def path_markdown(G, path: list[str], doc_id: str) -> str:
+    """'this post —mentions→ **nasa** ←mentions— doc-1a2b3c4d —mentions→ **ssrt**'"""
+    def name(n):
+        a = G.nodes[n]
+        if a["kind"] == "document":
+            return "this post" if a["name"] == doc_id else f"post `{display_id(a['name'])}`"
+        return f"**{a['name']}**"
+
+    out = [name(path[0]) if G.nodes[path[0]]["kind"] == "document" else f"this post names {name(path[0])}"]
+    for u, v in zip(path, path[1:]):
+        if G.has_edge(u, v):
+            out.append(f" —{G.edges[u, v].get('relation', '')}→ {name(v)}")
+        else:
+            out.append(f" ←{G.edges[v, u].get('relation', '')}— {name(v)}")
+    return "".join(out)
+
+
+def link_markdown(G, link: dict, doc_id: str) -> str:
+    core = ", ".join(G.nodes[n]["name"] for n in link["core"]) or "none"
+    if link["path"]:
+        tail = (" (a core entity itself)" if len(link["path"]) == 1 else "")
+        return f"**Path to the cluster's core** ({core}): {path_markdown(G, link['path'], doc_id)}{tail}"
+    if link["mentions"]:
+        return f"**Path to the cluster's core** ({core}): none; the entities this post names are not connected to them."
+    return f"**Path to the cluster's core** ({core}): this post names none of the cluster's graph entities."
+
+
+def explanation_card(run_id: str, doc_id: str, link: tuple[Any, dict] | None = None) -> None:
     try:
         ev = explain.evidence(doc_id, run_id)
     except LookupError as exc:
@@ -240,6 +284,8 @@ def explanation_card(run_id: str, doc_id: str) -> None:
     entities = kg.doc_entities(doc_id)
     if entities:
         st.markdown("**KG entities:** " + ", ".join(entities))
+    if link and link[1]["core"]:
+        st.markdown(link_markdown(link[0], link[1], doc_id))
 
     cached = explain.cached_rationale(doc_id, run_id)
     st.markdown("**Rationale**")
@@ -301,16 +347,21 @@ def dashboard() -> None:
             select_doc(run_id, points, by_display.get(typed, typed))
         scatter(run_id, points, clusters, st.session_state.get(key), st.session_state.doc_id)
 
+    doc_id = st.session_state.doc_id
+    home = points.loc[points["doc_id"] == doc_id, "cluster_id"]
+    link = post_link(run_id, doc_id, int(home.iloc[0])) if not home.empty else None
     with right:
         st.subheader("Cluster")
         if options:
             cluster_id = st.selectbox("Cluster", options, key=key,
                                       format_func=lambda c: cluster_name(c, clusters[c]))
-            cluster_panel(run_id, clusters, cluster_id)
+            mine = set(link[1]["mentions"]) | set(link[1]["path"] or []) if link else set()
+            cluster_panel(run_id, clusters, cluster_id,
+                          frozenset(mine) if not home.empty and cluster_id == int(home.iloc[0]) else frozenset())
 
     st.subheader("Why is this document here?")
-    if st.session_state.doc_id:
-        explanation_card(run_id, st.session_state.doc_id)
+    if doc_id:
+        explanation_card(run_id, doc_id, link)
     else:
         st.caption("Select a point in the map to see its explanation.")
 

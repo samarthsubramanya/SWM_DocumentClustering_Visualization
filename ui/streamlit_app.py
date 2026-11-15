@@ -7,6 +7,7 @@ button and the chat call an LLM.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -45,6 +46,8 @@ TYPE_COLORS = {
 # Postal addresses from signatures / catalogue listings: kept in the graph, hidden in the view.
 ADDRESS_RE = re.compile(r"\b\d{5}(-\d{4})?\b|\b[a-z]\d[a-z]\s?\d[a-z]\d\b|,\s*[a-z]{2}\s+\d", re.I)
 GRAPH_MAX_NODES = 25
+REPORTS = ROOT / "eval" / "reports"
+STAMP = re.compile(r"(\d{8}-\d{6})")
 WEAK_MARGIN = 0.15
 
 st.set_page_config(page_title="Explainable News Clustering", layout="wide")
@@ -194,13 +197,14 @@ def scatter(run_id: str, points: pd.DataFrame, clusters: dict[int, dict], cluste
         if not members.empty and cluster_id in clusters:
             fig.add_annotation(x=members["x"].median(), y=members["y"].median(), showarrow=False,
                                text=cluster_name(cluster_id, clusters[cluster_id]),
-                               bgcolor="rgba(255,255,255,0.85)", font={"size": 13})
+                               bgcolor="rgba(255,255,255,0.85)", font={"size": 13, "color": "#111111"})
     row = points.loc[points["doc_id"] == doc_id]
     if not row.empty:
         fig.add_trace(go.Scattergl(
             x=row["x"], y=row["y"], mode="markers", customdata=[[doc_id]], hovertext=[display_id(doc_id)],
             hoverinfo="text", name="selected post", showlegend=False,
-            marker={"size": 16, "symbol": "star", "color": "#111111", "line": {"color": "white", "width": 1.5}},
+            # gold with a dark rim: visible on Streamlit's light and dark themes
+            marker={"size": 18, "symbol": "star", "color": "#FFC627", "line": {"color": "#111111", "width": 1.5}},
         ))
     fig.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 0, "b": 0},
                       xaxis={"visible": False}, yaxis={"visible": False})
@@ -460,9 +464,42 @@ with st.sidebar:
     if st.button("Clear conversation", width="stretch"):
         st.session_state.messages = []
 
-try:
-    dashboard()
-except Exception as exc:  # Postgres down / schema missing: keep the chat usable
-    st.error(f"Dashboard unavailable: {exc}")
+def evaluation() -> None:
+    """The saved evaluation reports (eval/reports), newest first; no database needed."""
+    runs = sorted(REPORTS.glob("text2cypher-*.json"), key=lambda p: STAMP.search(p.name).group(1))
+    if runs:
+        r = json.loads(runs[-1].read_text())
+        st.subheader("Text2Cypher")
+        st.caption(f"{runs[-1].name} · {r['n_questions']} gold questions, {r['n_informative']} scored "
+                   "(gold answers that are empty or over 50 rows are excluded)")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Valid on first try", f"{r['validity_first_try']:.0%}")
+        c2.metric("Valid after repair", f"{r['validity']:.0%}")
+        c3.metric("Execution accuracy", f"{r['execution_accuracy']:.3f}", help="Same rows as the gold Cypher.")
+        st.dataframe(pd.DataFrame(r["results"])[["id", "pattern", "question", "attempts", "valid_first_try", "correct"]],
+                     hide_index=True)
 
-chat()
+    reports = sorted(REPORTS.glob("*.md"), key=lambda p: STAMP.search(p.name).group(1) if STAMP.search(p.name) else "",
+                     reverse=True)
+    if not reports:
+        st.info(f"No reports in {REPORTS}; run scripts/06_eval.py.")
+        return
+    st.subheader("Reports")
+    chosen = st.selectbox("Report", reports, format_func=lambda p: p.name)
+    raw = chosen.read_bytes()
+    try:
+        st.markdown(raw.decode("utf-8"))
+    except UnicodeDecodeError:   # some reports were written on Windows (cp1252: "±" = 0xb1)
+        st.markdown(raw.decode("cp1252", errors="replace"))
+
+
+explore, ask, results = st.tabs(["Explore", "Ask the agents", "Evaluation"])
+with explore:
+    try:
+        dashboard()
+    except Exception as exc:  # Postgres down / schema missing: keep the other tabs usable
+        st.error(f"Dashboard unavailable: {exc}")
+with ask:
+    chat()
+with results:
+    evaluation()

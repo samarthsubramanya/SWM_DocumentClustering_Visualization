@@ -191,12 +191,15 @@ def scatter(run_id: str, points: pd.DataFrame, clusters: dict[int, dict], cluste
         render_mode="webgl", height=560,
     )
     fig.update_traces(marker={"size": 3})
-    if cluster_id is not None:  # the selected cluster stays bright, the rest fade
-        fig.for_each_trace(lambda t: t.update(marker_opacity=1.0 if t.name == str(cluster_id) else 0.2))
+    if cluster_id is not None:  # the selected cluster keeps its color; with ~17k overlapping points
+        # a lower opacity alone still reads as bright, so the rest turn grey as well
+        fig.for_each_trace(lambda t: None if t.name == str(cluster_id)
+                           else t.update(marker_color="#8a8f98", marker_opacity=0.15))
         members = points.loc[points["cluster_id"] == cluster_id]
         if not members.empty and cluster_id in clusters:
-            fig.add_annotation(x=members["x"].median(), y=members["y"].median(), showarrow=False,
-                               text=cluster_name(cluster_id, clusters[cluster_id]),
+            # above the cluster, not at its center, where it would cover the selected post's star
+            fig.add_annotation(x=members["x"].median(), y=members["y"].quantile(0.95), yanchor="bottom", yshift=6,
+                               showarrow=False, text=cluster_name(cluster_id, clusters[cluster_id]),
                                bgcolor="rgba(255,255,255,0.85)", font={"size": 13, "color": "#111111"})
     row = points.loc[points["doc_id"] == doc_id]
     if not row.empty:

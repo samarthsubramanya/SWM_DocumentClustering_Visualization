@@ -25,12 +25,28 @@ PROMPT = """Write ONE read-only Cypher query for Neo4j 5 that answers the questi
 Graph schema:
 {schema}
 
-Notes:
-- Entity names are stored lowercase; match user text with toLower(...) and CONTAINS.
+Rules:
+- An entity's only name property is `name`, in lowercase. Match a named entity exactly, with the
+  user's spelling lowercased: e.name = 'nasa'.
+- If the question does not say what type an entity is, match it without a label:
+  (d:Document)-[:mentions]->(e) WHERE e.name = 'israel'.
+- Documents reach entities through `mentions` (and Topic nodes through `about`). To find documents
+  about an entity, follow that edge; never search Document.id, which is an opaque identifier.
 - Cluster membership lives on Document nodes (Document.cluster_id, integer).
+- Count what the question asks about: "how many organizations" counts DISTINCT organization nodes.
 - Use only the labels, relationship types and properties listed in the schema.
-- Return at most {max_rows} rows (use LIMIT).
-- Never write to the graph.
+- Return at most {max_rows} rows (use LIMIT). Never write to the graph.
+
+Examples:
+Q: How many distinct people are mentioned in cluster 3?
+A: MATCH (:Document {{cluster_id: 3}})-[:mentions]->(p:Person) RETURN count(DISTINCT p) AS people
+Q: Which documents mention apple?
+A: MATCH (d:Document)-[:mentions]->(e) WHERE e.name = 'apple' RETURN DISTINCT d.id LIMIT {max_rows}
+Q: Which organizations appear in both cluster 2 and cluster 9?
+A: MATCH (:Document {{cluster_id: 2}})-[:mentions]->(o:Organization)<-[:mentions]-(:Document {{cluster_id: 9}})
+   RETURN DISTINCT o.name LIMIT {max_rows}
+Q: Which people are affiliated with the nsa?
+A: MATCH (p:Person)-[:affiliatedWith]->(:Organization {{name: 'nsa'}}) RETURN p.name LIMIT {max_rows}
 {feedback}
 Question: {question}
 """

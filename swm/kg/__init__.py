@@ -55,7 +55,9 @@ def entity_relations(onto: dict) -> dict[str, dict]:
 def schema_text(onto: dict) -> str:
     """Graph schema description for Text2Cypher prompts."""
     lines = ["Node labels:", "- Document {id: string, cluster_id: integer, run_id: string}"]
-    lines += [f"- {k} {{name: string, lowercase}}: {v['descriptor']}" for k, v in onto["entities"].items()]
+    # "{name: string, lowercase}" here once read as a second property: the LLM wrote {lowercase: 'nasa'}.
+    lines += [f"- {k} {{name: string}}: {v['descriptor']}" for k, v in onto["entities"].items()]
+    lines.append("Every entity name is stored in lowercase.")
     lines.append("Relationships (entity->entity relationships carry doc_ids: list of source document ids):")
     lines += [f"- (:{s})-[:{r}]->(:{t})" for r, spec in onto["relations"].items()
               for s in spec["source"] for t in spec["target"]]

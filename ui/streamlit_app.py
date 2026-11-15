@@ -16,6 +16,7 @@ from typing import Any
 import httpx
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
@@ -139,7 +140,26 @@ def pyvis_html(nodes: list[dict], edges: list[dict]) -> str:
     return net.generate_html()
 
 
-def scatter(run_id: str, points: pd.DataFrame) -> None:
+def select_doc(run_id: str, points: pd.DataFrame, doc_id: str) -> None:
+    """Select a post and its cluster. Call before the cluster selectbox is drawn."""
+    st.session_state.doc_id = doc_id
+    hit = points.loc[points["doc_id"] == doc_id, "cluster_id"]
+    if not hit.empty:
+        st.session_state[f"cluster-{run_id}"] = int(hit.iloc[0])
+
+
+def apply_map_click(run_id: str, points: pd.DataFrame) -> None:
+    """A click on the map selects that post and its cluster; read from the chart's state at the
+    top of the run, so every view drawn below already reflects it."""
+    state = st.session_state.get(f"scatter-{run_id}")
+    picked = state.get("selection", {}).get("points", []) if state else []
+    if picked and (doc := picked[0]["customdata"][0]) != st.session_state.get("map_pick"):
+        st.session_state.map_pick = doc
+        select_doc(run_id, points, doc)
+
+
+def scatter(run_id: str, points: pd.DataFrame, clusters: dict[int, dict], cluster_id: int | None,
+            doc_id: str) -> None:
     st.subheader("Embedding map")
     df = points.assign(cluster=points["cluster_id"].astype(str), doc=points["doc_id"].map(display_id))
     fig = px.scatter(
@@ -148,12 +168,24 @@ def scatter(run_id: str, points: pd.DataFrame) -> None:
         render_mode="webgl", height=560,
     )
     fig.update_traces(marker={"size": 3})
+    if cluster_id is not None:  # the selected cluster stays bright, the rest fade
+        fig.for_each_trace(lambda t: t.update(marker_opacity=1.0 if t.name == str(cluster_id) else 0.2))
+        members = points.loc[points["cluster_id"] == cluster_id]
+        if not members.empty and cluster_id in clusters:
+            fig.add_annotation(x=members["x"].median(), y=members["y"].median(), showarrow=False,
+                               text=cluster_name(cluster_id, clusters[cluster_id]),
+                               bgcolor="rgba(255,255,255,0.85)", font={"size": 13})
+    row = points.loc[points["doc_id"] == doc_id]
+    if not row.empty:
+        fig.add_trace(go.Scattergl(
+            x=row["x"], y=row["y"], mode="markers", customdata=[[doc_id]], hovertext=[display_id(doc_id)],
+            hoverinfo="text", name="selected post", showlegend=False,
+            marker={"size": 16, "symbol": "star", "color": "#111111", "line": {"color": "white", "width": 1.5}},
+        ))
     fig.update_layout(showlegend=False, margin={"l": 0, "r": 0, "t": 0, "b": 0},
                       xaxis={"visible": False}, yaxis={"visible": False})
-    event = st.plotly_chart(fig, on_select="rerun", selection_mode="points",
-                            key=f"scatter-{run_id}", use_container_width=True)
-    if event and event.selection.points:
-        st.session_state.doc_id = event.selection.points[0]["customdata"][0]
+    st.plotly_chart(fig, on_select="rerun", selection_mode="points",
+                    key=f"scatter-{run_id}", width="stretch")
 
 
 def cluster_panel(run_id: str, clusters: dict[int, dict], cluster_id: int) -> None:
@@ -253,25 +285,27 @@ def dashboard() -> None:
                    help=helps.get(key))
 
     points, clusters = load_points(run_id), load_clusters(run_id)
+    options = sorted(clusters)
+    key = f"cluster-{run_id}"   # the selectbox's state: set by map clicks and typed ids too
     st.session_state.setdefault("doc_id", "")
+    if options and st.session_state.get(key) not in options:
+        st.session_state[key] = options[0]
+    apply_map_click(run_id, points)
+
     left, right = st.columns([3, 2])
     with left:
-        scatter(run_id, points)
         shown = display_id(st.session_state["doc_id"]) if st.session_state.get("doc_id") else ""
         typed = st.text_input("Document", value=shown, placeholder="click a point, or paste a doc-… id").strip()
         if typed != shown:
             by_display = dict(zip(points["doc_id"].map(display_id), points["doc_id"]))
-            st.session_state.doc_id = by_display.get(typed, typed)
+            select_doc(run_id, points, by_display.get(typed, typed))
+        scatter(run_id, points, clusters, st.session_state.get(key), st.session_state.doc_id)
 
-    selected = points.loc[points["doc_id"] == st.session_state.doc_id, "cluster_id"]
-    options = sorted(clusters)
     with right:
         st.subheader("Cluster")
         if options:
-            cluster_id = st.selectbox(
-                "Cluster", options, format_func=lambda c: cluster_name(c, clusters[c]),
-                index=options.index(int(selected.iloc[0])) if not selected.empty else 0,
-            )
+            cluster_id = st.selectbox("Cluster", options, key=key,
+                                      format_func=lambda c: cluster_name(c, clusters[c]))
             cluster_panel(run_id, clusters, cluster_id)
 
     st.subheader("Why is this document here?")
@@ -358,7 +392,7 @@ with st.sidebar:
     st.header("Agents")
     st.markdown("\n".join(f"- **{v}**" for k, v in AGENT_LABELS.items() if k != "none"))
     st.caption(f"API: {API_BASE_URL}")
-    if st.button("Clear conversation", use_container_width=True):
+    if st.button("Clear conversation", width="stretch"):
         st.session_state.messages = []
 
 try:

@@ -81,6 +81,16 @@ def load_clusters(run_id: str) -> dict[int, dict]:
     )}
 
 
+@st.cache_data
+def load_mix(run_id: str) -> pd.DataFrame:
+    """Gold newsgroup counts per cluster (shown only with the gold toggle on)."""
+    return pd.DataFrame(db.query(
+        """SELECT dc.cluster_id, d.label_name, count(*) AS n
+           FROM doc_cluster dc JOIN documents d ON d.id = dc.doc_id WHERE dc.run_id = %s GROUP BY 1, 2""",
+        (run_id,),
+    ))
+
+
 @st.cache_data(ttl=300)
 def load_subgraph(run_id: str, cluster_id: int):
     return kg.cluster_subgraph(run_id, cluster_id)
@@ -201,6 +211,10 @@ def scatter(run_id: str, points: pd.DataFrame, clusters: dict[int, dict], cluste
 def cluster_panel(run_id: str, clusters: dict[int, dict], cluster_id: int, highlight=frozenset()) -> None:
     info = clusters[cluster_id]
     st.markdown(f"**{info['label'] or 'Unlabeled (run 05_kg.py)'}** · {info['size']} docs")
+    if show_gold() and not (mix := load_mix(run_id)).empty:
+        top = mix[mix["cluster_id"] == cluster_id].nlargest(3, "n")
+        st.caption("Newsgroups in this cluster (reference only): "
+                   + " · ".join(f"{r.label_name} {r.n / info['size']:.0%}" for r in top.itertuples()))
     st.bar_chart(pd.DataFrame(info["keywords"][:10], columns=["term", "weight"]).set_index("term"),
                  horizontal=True, height=260, sort=False)
     nodes, edges, source = load_subgraph(run_id, cluster_id)

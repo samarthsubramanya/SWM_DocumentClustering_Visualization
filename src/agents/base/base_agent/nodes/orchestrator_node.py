@@ -78,12 +78,17 @@ Available agents:
 1. cluster
    Inspect or compare clusterings of the news corpus: a cluster's size,
    top terms, label and newsgroup mix, or metrics across runs (not entities).
+   Clusters are often named by a topic word instead of a number ("the braves
+   cluster", "the space one", or just "braves"), and questions about why a
+   word or term is in a cluster or its label belong here.
    Examples: "show cluster 3", "compare HDBSCAN vs k-means",
-   "what are the top terms of cluster 7?"
+   "what are the top terms of cluster 7?", "describe the hockey cluster",
+   "why is year in braves?", "why is 'nasa' in the space cluster?"
 
 2. explain
-   Explain why a document belongs to its cluster.
-   Examples: "why is doc 42 in cluster 3?"
+   Explain why a document (a post) belongs to its cluster. Documents are named
+   by ids such as doc-3f9a1c2e.
+   Examples: "why is doc-3f9a1c2e in its cluster?", "explain doc-1a2b3c4d"
 
 3. kg
    Questions about named entities (people, organizations, locations, events,

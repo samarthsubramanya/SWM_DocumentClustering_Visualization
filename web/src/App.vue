@@ -9,7 +9,6 @@ import { cycleTheme, themeMode } from './lib/theme'
 const destinations = [
   { to: '/explore', label: 'Explore', icon: 'bubble_chart' },
   { to: '/ask', label: 'Ask', icon: 'forum' },
-  { to: '/evaluation', label: 'Evaluation', icon: 'fact_check' },
 ]
 
 const route = useRoute()

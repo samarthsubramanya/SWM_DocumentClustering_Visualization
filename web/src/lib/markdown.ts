@@ -1,5 +1,5 @@
-// Markdown from agent answers and evaluation reports. Agent answers are LLM output, so the
-// HTML is sanitized before it reaches the page.
+// Markdown in agent answers. They are LLM output, so the HTML is sanitized before it reaches
+// the page.
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 

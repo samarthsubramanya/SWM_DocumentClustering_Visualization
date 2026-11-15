@@ -9,7 +9,6 @@ Material's monochrome (black-and-white) scheme, in light and dark, generated wit
 |---|---|
 | **Explore** | The run's scores and the map of posts. Click a post to see the selected cluster's terms, label and knowledge graph, and why the post is in that cluster: its evidence, the path to the cluster's core entities, and the rationale. |
 | **Ask** | A chat with the harness agents. Knowledge-graph answers include the generated Cypher, any repairs and the result rows. |
-| **Evaluation** | The saved reports in `eval/reports`, with the latest Text2Cypher run summarized at the top. |
 
 ## Run it
 

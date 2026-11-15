@@ -32,7 +32,7 @@ const router = createRouter({
     { path: '/', redirect: '/explore' },
     { path: '/explore', component: () => import('./views/ExploreView.vue'), meta: { title: 'Explore' } },
     { path: '/ask', component: () => import('./views/AskView.vue'), meta: { title: 'Ask the agents' } },
-    { path: '/evaluation', component: () => import('./views/EvaluationView.vue'), meta: { title: 'Evaluation' } },
+    { path: '/:rest(.*)*', redirect: '/explore' }, // old links (e.g. /evaluation) land on Explore
   ],
 })
 

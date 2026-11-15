@@ -59,9 +59,9 @@ questions:
 
   - id: q09
     pattern: cluster-list
-    question: What topics are the documents in cluster 6 about?
+    question: How many distinct topics are the documents in cluster 6 about?
     gold: >-
-      MATCH (:Document {cluster_id: 6})-[:about]->(t:Topic) RETURN DISTINCT t.name
+      MATCH (:Document {cluster_id: 6})-[:about]->(t:Topic) RETURN count(DISTINCT t)
 
   - id: q10
     pattern: entity-lookup
@@ -98,10 +98,10 @@ questions:
 
   - id: q15
     pattern: cross-cluster
-    question: Which locations are mentioned in both cluster 15 and cluster 17?
+    question: How many locations are mentioned in more than one cluster?
     gold: >-
-      MATCH (:Document {cluster_id: 15})-[:mentions]->(l:Location)<-[:mentions]-(:Document {cluster_id: 17})
-      RETURN DISTINCT l.name
+      MATCH (d:Document)-[:mentions]->(l:Location) WITH l, count(DISTINCT d.cluster_id) AS clusters
+      WHERE clusters > 1 RETURN count(l)
 
   - id: q16
     pattern: relation

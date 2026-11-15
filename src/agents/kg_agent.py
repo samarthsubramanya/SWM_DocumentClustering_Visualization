@@ -68,10 +68,14 @@ async def text2cypher(question: str) -> dict[str, Any]:
     feedback, cypher, problems = "", "", []
 
     for attempt in range(1, ATTEMPTS + 1):
-        cypher = (await llm.ainvoke(PROMPT.format(
-            schema=schema, max_rows=MAX_ROWS, feedback=feedback, question=question,
-        ))).cypher.strip()
-        found = await asyncio.to_thread(kg.validate_cypher, cypher)
+        try:
+            cypher = (await llm.ainvoke(PROMPT.format(
+                schema=schema, max_rows=MAX_ROWS, feedback=feedback, question=question,
+            ))).cypher.strip()
+        except RuntimeError as exc:  # no parsable query (e.g. output budget spent thinking): a failed attempt
+            cypher, found = "", [f"no query produced: {str(exc)[:200]}"]
+        else:
+            found = await asyncio.to_thread(kg.validate_cypher, cypher)
         if not found:
             try:
                 rows = await asyncio.to_thread(kg.read_query, cypher, MAX_ROWS)

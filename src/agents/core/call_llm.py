@@ -281,8 +281,9 @@ class SharedLLM:
 # see swm/llm.py. Same switch as the batch stages.
 _chat_llm = build_chat(
     # Explicitly provide enough output capacity rather than
-    # relying on the runtime/model default.
-    num_predict=2048,
+    # relying on the runtime/model default. Same setting as the batch stages (swm/llm.py):
+    # thinking models such as qwen3-30b-a3b on ASU RC need more than 2048.
+    num_predict=int(os.getenv("LLM_MAX_TOKENS", "2048")),
 
     # Text2Cypher / rationale prompts include schema and evidence.
     num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "8192")),

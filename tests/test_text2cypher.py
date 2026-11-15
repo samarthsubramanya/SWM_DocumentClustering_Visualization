@@ -40,3 +40,22 @@ def test_empty_llm_summary_falls_back_to_rows():
     assert rows_answer([]) == "No matching data was found."
     text = rows_answer([{"d.cluster_id": i} for i in range(25)], shown=20)
     assert text.startswith("25 results:") and "… and 5 more" in text
+
+
+def test_llm_failure_is_a_failed_attempt_not_a_crash(monkeypatch):
+    import asyncio
+
+    from src.agents import kg_agent
+
+    class Broken:
+        def with_structured_output(self, schema):
+            return self
+
+        async def ainvoke(self, prompt):
+            raise RuntimeError("length limit was reached")
+
+    monkeypatch.setattr(kg_agent, "get_llm", lambda: Broken())
+    monkeypatch.setattr(kg_agent.kg, "load_ontology", lambda: {"entities": {}, "relations": {}})
+    out = asyncio.run(kg_agent.text2cypher("q?"))
+    assert out["rows"] is None and len(out["problems"]) == kg_agent.ATTEMPTS
+    assert out["problems"][0]["problems"][0].startswith("no query produced")

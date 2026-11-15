@@ -299,8 +299,26 @@ def send_query(query: str) -> dict[str, Any]:
     return r.json()
 
 
+def render_cypher(meta: dict[str, Any]) -> None:
+    """The KG agent's query, its validation trail and the rows the answer was built from."""
+    repairs = meta.get("validation") or []
+    ok = "rows" in meta
+    st.caption(f"Generated Cypher · {'valid' if ok else 'rejected'} after {meta.get('attempts', 1)} "
+               f"attempt{'s' if meta.get('attempts', 1) != 1 else ''} · runs in a read-only transaction")
+    st.code(meta["cypher"], language="cypher")
+    if repairs:
+        with st.expander(f"Rejected by validation ({len(repairs)})"):
+            for r in repairs:
+                st.code(r["cypher"], language="cypher")
+                st.markdown("\n".join(f"- {p}" for p in r["problems"]))
+    if ok:
+        st.dataframe(pd.DataFrame(meta["rows"]), hide_index=True) if meta["rows"] else st.caption("No rows.")
+
+
 def render_assistant(msg: dict[str, Any]) -> None:
     st.markdown(msg["content"])
+    if msg.get("metadata", {}).get("cypher"):
+        render_cypher(msg["metadata"])
     if msg.get("agent"):
         st.caption(f"Handled by {AGENT_LABELS.get(msg['agent'], msg['agent'])}")
         with st.expander("Execution details"):

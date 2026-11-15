@@ -39,7 +39,10 @@ def _answer(query: str) -> dict[str, Any]:
             "metadata": {},
         }
     run_id = db.default_run()
-    ev = explain.evidence(doc_id, run_id)
+    try:
+        ev = explain.evidence(doc_id, run_id)
+    except LookupError as exc:  # no evidence computed for this run: say so instead of failing the request
+        return {"answer": str(exc).replace(doc_id, db.display_id(doc_id)), "metadata": {"run_id": run_id}}
     text = explain.rationale(doc_id, run_id, kg_entities=kg.doc_entities(doc_id))
     # Answers use opaque ids: real ids name the gold newsgroup, which the views keep hidden.
     shown = {**ev, "exemplars": [{**e, "doc_id": db.display_id(e["doc_id"])} for e in ev["exemplars"]]}

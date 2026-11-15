@@ -418,7 +418,10 @@ def render_cypher(meta: dict[str, Any]) -> None:
                 st.code(r["cypher"], language="cypher")
                 st.markdown("\n".join(f"- {p}" for p in r["problems"]))
     if ok:
-        st.dataframe(pd.DataFrame(meta["rows"]), hide_index=True) if meta["rows"] else st.caption("No rows.")
+        if meta["rows"]:
+            st.dataframe(pd.DataFrame(meta["rows"]), hide_index=True)
+        else:
+            st.caption("No rows.")
 
 
 def render_assistant(msg: dict[str, Any]) -> None:
@@ -436,16 +439,21 @@ def chat() -> None:
     healthy = backend_healthy()
     if not healthy:
         st.warning(f"Agent API unavailable at {API_BASE_URL}; start uvicorn src.api.app:app.")
-    for m in st.session_state.messages:
-        with st.chat_message(m["role"]):
-            render_assistant(m) if m["role"] == "assistant" else st.markdown(m["content"])
+    history = st.container()  # inside a tab the input renders in place: keep every message above it
+    with history:
+        for m in st.session_state.messages:
+            with st.chat_message(m["role"]):
+                if m["role"] == "assistant":
+                    render_assistant(m)
+                else:
+                    st.markdown(m["content"])
 
     if prompt := st.chat_input("Ask about clusters, explanations or the graph...", disabled=not healthy):
         prompt = prompt.strip()
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        with history, st.chat_message("user"):
             st.markdown(prompt)
-        with st.chat_message("assistant"):
+        with history, st.chat_message("assistant"):
             with st.spinner("Working on your request..."):
                 try:
                     resp = send_query(prompt)

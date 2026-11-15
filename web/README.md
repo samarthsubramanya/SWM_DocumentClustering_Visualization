@@ -1,8 +1,9 @@
 # Web dashboard (Vue 3 + Material 3)
 
 A second front end for the project, next to the Streamlit app in `ui/` (which stays as it is).
-It is built with Vue 3, Vite and Google's Material Web components. Every color token is
-generated from one seed color with `@material/material-color-utilities`, in light and dark.
+It is built with Vue 3, Vite and Google's Material Web components. The interface uses
+Material's monochrome (black-and-white) scheme, in light and dark, generated with
+`@material/material-color-utilities`; color is used only for data (clusters and entity types).
 
 | View | What it shows |
 |---|---|

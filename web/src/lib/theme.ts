@@ -1,17 +1,18 @@
-// Material 3 color: every --md-sys-color-* token is generated from one seed color, for a
-// light and a dark scheme, so Material Web components and our own styles share one palette.
+// Material 3 color: every --md-sys-color-* token comes from Material's monochrome scheme, in
+// light and dark, so Material Web components and our own styles share one black-and-white
+// palette. Color is kept for data only: clusters and entity types (categoricalColor below).
 import {
   DynamicColor,
   Hct,
   MaterialDynamicColors,
-  SchemeTonalSpot,
+  SchemeMonochrome,
   argbFromHex,
   hexFromArgb,
 } from '@material/material-color-utilities'
 import { ref, watchEffect } from 'vue'
 
-// ASU maroon: the project's school color, and a warm seed that reads well in both modes.
-const SEED = '#8C1D40'
+// The monochrome scheme ignores the seed's hue; a neutral grey keeps that explicit.
+const SEED = '#808080'
 
 const ROLES = [
   'primary', 'onPrimary', 'primaryContainer', 'onPrimaryContainer', 'inversePrimary',
@@ -27,7 +28,7 @@ const ROLES = [
 const kebab = (role: string) => role.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())
 
 function tokens(dark: boolean): Record<string, string> {
-  const scheme = new SchemeTonalSpot(Hct.fromInt(argbFromHex(SEED)), dark, 0)
+  const scheme = new SchemeMonochrome(Hct.fromInt(argbFromHex(SEED)), dark, 0)
   const colors = MaterialDynamicColors as unknown as Record<string, DynamicColor>
   return Object.fromEntries(
     ROLES.map((role) => [`--md-sys-color-${kebab(role)}`, hexFromArgb(colors[role].getArgb(scheme))]),

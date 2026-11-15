@@ -125,9 +125,10 @@ function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
     ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle))
   }
   ctx.closePath()
-  ctx.fillStyle = token('--md-sys-color-tertiary-container')
-  ctx.strokeStyle = token('--md-sys-color-on-tertiary-container')
-  ctx.lineWidth = 1.5
+  // highest contrast on any palette: ink-colored star with a halo in the background color
+  ctx.fillStyle = token('--md-sys-color-on-surface')
+  ctx.strokeStyle = token('--md-sys-color-surface')
+  ctx.lineWidth = 2
   ctx.fill()
   ctx.stroke()
 }

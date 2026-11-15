@@ -33,7 +33,7 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 
 from src.api.models import HealthResponse
-from src.api.routes import query_router
+from src.api.routes import explore_router, query_router
 from src.core.events import emit
 
 
@@ -99,6 +99,10 @@ app = FastAPI(
 
 app.include_router(
     query_router
+)
+
+app.include_router(
+    explore_router
 )
 
 

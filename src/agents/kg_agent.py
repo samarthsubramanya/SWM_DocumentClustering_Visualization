@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 from src.agents.core.call_llm import get_llm
 from src.core.events import emit
-from swm import kg
+from swm import db, kg
 
 MAX_ROWS = 50
 ATTEMPTS = 3
@@ -86,6 +87,16 @@ async def text2cypher(question: str) -> dict[str, Any]:
     return {"cypher": cypher, "rows": None, "attempts": ATTEMPTS, "problems": problems}
 
 
+REAL_DOC_ID = re.compile(r"^(?:train|test)/[\w.+-]+/\d+$")
+
+
+def opaque_rows(rows: list[dict]) -> list[dict]:
+    """Replace real document ids (they name the gold newsgroup) with the dashboard's opaque ids."""
+    def swap(v):
+        return db.display_id(v) if isinstance(v, str) and REAL_DOC_ID.match(v) else v
+    return [{k: [swap(x) for x in v] if isinstance(v, list) else swap(v) for k, v in r.items()} for r in rows]
+
+
 async def run(query: str) -> dict[str, Any]:
     """Entry point called by the Base Agent handoff node."""
     result = await text2cypher(query)
@@ -93,9 +104,10 @@ async def run(query: str) -> dict[str, Any]:
     if result["rows"] is None:
         return {"answer": "I couldn't build a valid graph query for that question.", "metadata": meta}
 
+    rows = opaque_rows(result["rows"])
     summary = await get_llm().ainvoke(
         "Answer the question using only these Neo4j results. "
         "If there are no rows, say no matching data was found.\n"
-        f"Question: {query}\nCypher: {result['cypher']}\nRows: {json.dumps(result['rows'], default=str)}"
+        f"Question: {query}\nCypher: {result['cypher']}\nRows: {json.dumps(rows, default=str)}"
     )
-    return {"answer": summary.content, "metadata": {**meta, "rows": result["rows"]}}
+    return {"answer": summary.content, "metadata": {**meta, "rows": rows}}

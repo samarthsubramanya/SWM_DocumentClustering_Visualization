@@ -7,7 +7,6 @@ button and the chat call an LLM.
 
 from __future__ import annotations
 
-import hashlib
 import os
 import re
 import sys
@@ -92,7 +91,7 @@ def show_gold() -> bool:
 
 def display_id(doc_id: str) -> str:
     """Opaque id for the UI: real ids (train/sci.space/60151) carry the gold newsgroup."""
-    return doc_id if show_gold() else "doc-" + hashlib.sha1(doc_id.encode()).hexdigest()[:8]
+    return doc_id if show_gold() else db.display_id(doc_id)
 
 
 def doc_text(doc_id: str) -> dict | None:

@@ -5,7 +5,10 @@ Embeddings are not stored here; they live in data/cache/*.npy (see swm.represent
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
+from functools import lru_cache
 
 import psycopg
 from psycopg.rows import dict_row
@@ -107,3 +110,28 @@ def default_run() -> str:
     if not rows:
         raise LookupError("No clustering runs yet; run scripts/03_cluster.py first.")
     return rows[0]["run_id"]
+
+
+# ==========================================================
+# Opaque post ids, shared by the dashboard and the agents
+# ==========================================================
+
+DISPLAY_ID = re.compile(r"\bdoc-[0-9a-f]{8}\b", re.IGNORECASE)
+
+
+def display_id(doc_id: str) -> str:
+    """Opaque id shown to users: real ids (train/sci.space/60151) carry the gold newsgroup."""
+    return "doc-" + hashlib.sha1(doc_id.encode()).hexdigest()[:8]
+
+
+@lru_cache(maxsize=1)
+def _display_ids() -> dict[str, str]:
+    return {display_id(r["id"]): r["id"] for r in query("SELECT id FROM documents")}
+
+
+def resolve_display_id(token: str) -> str | None:
+    """doc-3f9a1c2e -> the real document id, or None if no document has that id."""
+    token = token.strip().lower()
+    if token not in _display_ids():
+        _display_ids.cache_clear()       # documents may have been added since the cache was built
+    return _display_ids().get(token)

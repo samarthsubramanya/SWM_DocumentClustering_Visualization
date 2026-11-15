@@ -21,6 +21,8 @@ async def run(query: str) -> dict[str, Any]:
 
 
 def _find_doc(query: str) -> str | None:
+    if m := db.DISPLAY_ID.search(query):          # the dashboard's opaque ids (doc-3f9a1c2e)
+        return db.resolve_display_id(m.group(0))
     if m := DOC_ID.search(query):
         return m.group(0)
     if m := DOC_NUMBER.search(query):
@@ -33,13 +35,15 @@ def _answer(query: str) -> dict[str, Any]:
     doc_id = _find_doc(query)
     if not doc_id:
         return {
-            "answer": "Which document? Give its id (e.g. `train/sci.space/60151`) or number (`doc 60151`).",
+            "answer": "Which document? Give its id as shown in the dashboard (e.g. `doc-3f9a1c2e`).",
             "metadata": {},
         }
     run_id = db.default_run()
     ev = explain.evidence(doc_id, run_id)
     text = explain.rationale(doc_id, run_id, kg_entities=kg.doc_entities(doc_id))
+    # Answers use opaque ids: real ids name the gold newsgroup, which the views keep hidden.
+    shown = {**ev, "exemplars": [{**e, "doc_id": db.display_id(e["doc_id"])} for e in ev["exemplars"]]}
     return {
-        "answer": f"**{doc_id}** → cluster {ev['cluster_id']}\n\n{text}",
-        "metadata": {"run_id": run_id, "doc_id": doc_id, "evidence": ev},
+        "answer": f"**{db.display_id(doc_id)}** → cluster {ev['cluster_id']}\n\n{text}",
+        "metadata": {"run_id": run_id, "doc_id": db.display_id(doc_id), "evidence": shown},
     }

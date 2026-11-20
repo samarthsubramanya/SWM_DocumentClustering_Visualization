@@ -1,0 +1,116 @@
+/* Material 3 type, shape and motion tokens. Color tokens are set at runtime (lib/theme.ts). */
+:root {
+  --font: 'Roboto Flex', Roboto, system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, Menlo, monospace;
+
+  --md-ref-typeface-brand: var(--font);
+  --md-ref-typeface-plain: var(--font);
+
+  --md-sys-typescale-display-small: 400 36px/44px var(--font);
+  --md-sys-typescale-headline-small: 400 24px/32px var(--font);
+  --md-sys-typescale-title-large: 400 22px/28px var(--font);
+  --md-sys-typescale-title-medium: 500 16px/24px var(--font);
+  --md-sys-typescale-title-small: 500 14px/20px var(--font);
+  --md-sys-typescale-body-large: 400 16px/24px var(--font);
+  --md-sys-typescale-body-medium: 400 14px/20px var(--font);
+  --md-sys-typescale-body-small: 400 12px/16px var(--font);
+  --md-sys-typescale-label-large: 500 14px/20px var(--font);
+  --md-sys-typescale-label-medium: 500 12px/16px var(--font);
+  --md-sys-typescale-label-small: 500 11px/16px var(--font);
+
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 9999px;
+
+  --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --md-sys-motion-duration-medium: 300ms;
+
+  /* 8dp spacing system */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+.material-symbols-outlined,
+md-icon {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Cards: tonal surfaces carry elevation, not shadows. */
+.card {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.card--outlined {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+.card__title { font: var(--md-sys-typescale-title-medium); }
+.card__subtitle { font: var(--md-sys-typescale-body-small); color: var(--md-sys-color-on-surface-variant); }
+
+.label { font: var(--md-sys-typescale-label-medium); color: var(--md-sys-color-on-surface-variant); letter-spacing: 0.4px; }
+.muted { color: var(--md-sys-color-on-surface-variant); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+
+/* A small static chip for values, not an interactive control. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--md-sys-shape-corner-small);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+}
+.tag--tonal {
+  border-color: transparent;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Markdown from reports and agent answers */
+.prose { font: var(--md-sys-typescale-body-medium); overflow-wrap: anywhere; }
+.prose p, .prose ul, .prose ol, .prose table { margin: 0 0 var(--space-2); }
+.prose h1, .prose h2, .prose h3 { font: var(--md-sys-typescale-title-medium); margin: var(--space-3) 0 var(--space-2); }
+.prose code { font-family: var(--font-mono); font-size: 13px; background: var(--md-sys-color-surface-container-high); padding: 1px 4px; border-radius: var(--md-sys-shape-corner-extra-small); }
+.prose table { border-collapse: collapse; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--md-sys-color-outline-variant); padding: 6px 12px 6px 0; text-align: left; white-space: nowrap; }
+
+.table-wrap { overflow-x: auto; }
+table.data { border-collapse: collapse; width: 100%; font: var(--md-sys-typescale-body-medium); }
+table.data th { font: var(--md-sys-typescale-label-medium); color: var(--md-sys-color-on-surface-variant); text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+table.data td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); vertical-align: top; }
+
+:focus-visible { outline: 2px solid var(--md-sys-color-secondary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

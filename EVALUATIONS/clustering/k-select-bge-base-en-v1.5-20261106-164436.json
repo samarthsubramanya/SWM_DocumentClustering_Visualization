@@ -1,0 +1,138 @@
+{
+  "embedding": "bge-base-en-v1.5",
+  "choice": {
+    "kmeans_by_silhouette": 12,
+    "agglomerative_by_silhouette": 10,
+    "kmeans_by_elbow": 20
+  },
+  "sweep": [
+    {
+      "k": 10,
+      "kmeans_inertia": 14778.3505859375,
+      "kmeans_silhouette": 0.5654250979423523,
+      "kmeans_nmi_info_only": 0.6325221942319568,
+      "agglomerative_silhouette": 0.5963093042373657,
+      "agglomerative_nmi_info_only": 0.6367268598870063
+    },
+    {
+      "k": 12,
+      "kmeans_inertia": 10513.3134765625,
+      "kmeans_silhouette": 0.5744655132293701,
+      "kmeans_nmi_info_only": 0.6575188097279757,
+      "agglomerative_silhouette": 0.5652980208396912,
+      "agglomerative_nmi_info_only": 0.656234138646665
+    },
+    {
+      "k": 14,
+      "kmeans_inertia": 9240.3662109375,
+      "kmeans_silhouette": 0.5379372239112854,
+      "kmeans_nmi_info_only": 0.6620153207767591,
+      "agglomerative_silhouette": 0.548324465751648,
+      "agglomerative_nmi_info_only": 0.6540395071452282
+    },
+    {
+      "k": 16,
+      "kmeans_inertia": 7919.0869140625,
+      "kmeans_silhouette": 0.5391441583633423,
+      "kmeans_nmi_info_only": 0.6682074999136262,
+      "agglomerative_silhouette": 0.5274636149406433,
+      "agglomerative_nmi_info_only": 0.6592036059528347
+    },
+    {
+      "k": 18,
+      "kmeans_inertia": 7076.6298828125,
+      "kmeans_silhouette": 0.5058003664016724,
+      "kmeans_nmi_info_only": 0.6672630591660564,
+      "agglomerative_silhouette": 0.5026550889015198,
+      "agglomerative_nmi_info_only": 0.6620073269070164
+    },
+    {
+      "k": 20,
+      "kmeans_inertia": 6258.072265625,
+      "kmeans_silhouette": 0.5257909297943115,
+      "kmeans_nmi_info_only": 0.6624353269705726,
+      "agglomerative_silhouette": 0.4674461781978607,
+      "agglomerative_nmi_info_only": 0.6631135709303666
+    },
+    {
+      "k": 22,
+      "kmeans_inertia": 5618.4306640625,
+      "kmeans_silhouette": 0.49562299251556396,
+      "kmeans_nmi_info_only": 0.663924365225083,
+      "agglomerative_silhouette": 0.4600825309753418,
+      "agglomerative_nmi_info_only": 0.6552710628219912
+    },
+    {
+      "k": 24,
+      "kmeans_inertia": 4927.79638671875,
+      "kmeans_silhouette": 0.5085996389389038,
+      "kmeans_nmi_info_only": 0.6592089476985832,
+      "agglomerative_silhouette": 0.4775145649909973,
+      "agglomerative_nmi_info_only": 0.6575270209036044
+    },
+    {
+      "k": 26,
+      "kmeans_inertia": 4488.55908203125,
+      "kmeans_silhouette": 0.5118091702461243,
+      "kmeans_nmi_info_only": 0.6533266687757666,
+      "agglomerative_silhouette": 0.48335880041122437,
+      "agglomerative_nmi_info_only": 0.6497040033089128
+    },
+    {
+      "k": 28,
+      "kmeans_inertia": 4172.02392578125,
+      "kmeans_silhouette": 0.5115605592727661,
+      "kmeans_nmi_info_only": 0.6508679963514545,
+      "agglomerative_silhouette": 0.48336562514305115,
+      "agglomerative_nmi_info_only": 0.6491989475082295
+    },
+    {
+      "k": 30,
+      "kmeans_inertia": 3925.826171875,
+      "kmeans_silhouette": 0.5072584748268127,
+      "kmeans_nmi_info_only": 0.6481824182738375,
+      "agglomerative_silhouette": 0.4827916920185089,
+      "agglomerative_nmi_info_only": 0.647728388166276
+    },
+    {
+      "k": 32,
+      "kmeans_inertia": 3680.63818359375,
+      "kmeans_silhouette": 0.5066124200820923,
+      "kmeans_nmi_info_only": 0.6422073840033546,
+      "agglomerative_silhouette": 0.4804627001285553,
+      "agglomerative_nmi_info_only": 0.6479408514641981
+    },
+    {
+      "k": 34,
+      "kmeans_inertia": 3447.250732421875,
+      "kmeans_silhouette": 0.4930257797241211,
+      "kmeans_nmi_info_only": 0.6392107940480088,
+      "agglomerative_silhouette": 0.4836018681526184,
+      "agglomerative_nmi_info_only": 0.6432954060410014
+    },
+    {
+      "k": 36,
+      "kmeans_inertia": 3323.21484375,
+      "kmeans_silhouette": 0.4692481458187103,
+      "kmeans_nmi_info_only": 0.6400259121262251,
+      "agglomerative_silhouette": 0.4614729583263397,
+      "agglomerative_nmi_info_only": 0.6405482127989017
+    },
+    {
+      "k": 38,
+      "kmeans_inertia": 3185.12939453125,
+      "kmeans_silhouette": 0.4796774387359619,
+      "kmeans_nmi_info_only": 0.640049544458338,
+      "agglomerative_silhouette": 0.4584525525569916,
+      "agglomerative_nmi_info_only": 0.6390009875273803
+    },
+    {
+      "k": 40,
+      "kmeans_inertia": 3049.726318359375,
+      "kmeans_silhouette": 0.45606729388237,
+      "kmeans_nmi_info_only": 0.6329593204239048,
+      "agglomerative_silhouette": 0.45581597089767456,
+      "agglomerative_nmi_info_only": 0.6350918951252196
+    }
+  ]
+}

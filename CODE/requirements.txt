@@ -1,0 +1,70 @@
+# ==========================================================
+# Agent framework (from course Agentic-harness)
+# ==========================================================
+langchain
+langgraph
+langchain-ollama
+langchain-openai          # OpenAI-compatible endpoints (ASU RC / Voyager keys)
+langsmith
+
+# ==========================================================
+# API / UI
+# ==========================================================
+fastapi
+uvicorn[standard]
+streamlit>=1.40            # plotly on_select + horizontal bar_chart
+httpx
+plotly                    # UMAP scatter; click-to-select via st.plotly_chart(on_select)
+pyvis                     # KG subgraph view
+networkx                  # PageRank, GraphML export, entity paths
+
+# ==========================================================
+# Storage
+# ==========================================================
+psycopg[binary]
+neo4j
+
+# ==========================================================
+# Embeddings, clustering, dimensionality reduction
+# ==========================================================
+sentence-transformers     # all-mpnet-base-v2, bge-base-en-v1.5
+scikit-learn              # 20NG loader, TF-IDF/LSA, k-means, agglomerative, metrics
+scipy
+umap-learn
+hdbscan
+
+# ==========================================================
+# LLM structured output / ontology
+# ==========================================================
+pydantic
+pyyaml
+
+# ==========================================================
+# Data
+# ==========================================================
+pandas
+numpy
+tqdm
+
+# ==========================================================
+# Optional A — dynamic ingestion (RSS / pasted text)
+# ==========================================================
+feedparser
+
+# ==========================================================
+# Optional B — PubMed adaptation
+# ==========================================================
+biopython                 # Bio.Entrez for PubMed abstracts
+
+# ==========================================================
+# Evaluation
+# ==========================================================
+krippendorff              # inter-rater agreement for human eval
+matplotlib                # metric/ablation plots for the report
+
+# ==========================================================
+# Env / dev
+# ==========================================================
+python-dotenv
+pytest
+pytest-asyncio

@@ -227,3 +227,8 @@ data/cache/*.pkl
 .DS_Store
 .pytest_cache/
 *.log
+data/raw/
+data/
+# ...but the top-level DATA/ folder (the dataset archive) is part of the repo; git here is
+# case-insensitive, so the rule above would otherwise hide it too.
+!/DATA/

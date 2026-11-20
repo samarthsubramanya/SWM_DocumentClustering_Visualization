@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# the root .gitignore (Python template) ignores every lib/ folder; this one is source
+!src/lib/

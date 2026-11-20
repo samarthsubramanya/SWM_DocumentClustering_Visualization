@@ -1,0 +1,53 @@
+# Minimal starter ontology for the 20 Newsgroups foundation.
+# Compiled 1:1 into the Neo4j schema: entity -> label, relation -> relationship type.
+entities:
+  Person:
+    descriptor: A named real individual the text is about or refers to (official, researcher, public figure). Not the post's author, a username, or a signature.
+  Organization:
+    descriptor: A company, agency, team, or other named institution.
+  Location:
+    descriptor: A place name (city, country, region, venue).
+  Event:
+    descriptor: A named occurrence (election, launch, match, trial, conference). Not a bare date or time.
+  Artifact:
+    descriptor: A product, technology, or piece of software mentioned in the text.
+  Topic:
+    descriptor: A subject or theme the document discusses, distinct from any named entity.
+
+relations:
+  affiliatedWith:
+    source: Person
+    target: Organization
+    descriptor: The person is a member of, works for, or represents the organization.
+  locatedIn:
+    source: [Organization, Event, Location]
+    target: Location
+    descriptor: The organization or event is based in or takes place at the location, or one place lies within another.
+  participatesIn:
+    source: [Person, Organization]
+    target: Event
+    descriptor: The person or organization takes part in the event.
+  produces:
+    source: [Organization, Person]
+    target: Artifact
+    descriptor: The organization or person makes, writes, develops, sells, or maintains the artifact.
+  partOf:
+    source: [Organization, Artifact]
+    target: [Organization, Artifact]
+    descriptor: A unit of a larger organization, or a component or version of a larger artifact (same kind on both sides).
+  worksWith:
+    source: Artifact
+    target: Artifact
+    descriptor: The artifact runs on, connects to, or is used together with the other artifact.
+  discusses:
+    source: [Person, Organization]
+    target: Topic
+    descriptor: The person or organization argues about, asks about, or takes a position on the topic.
+  about:
+    source: Document
+    target: Topic
+    descriptor: The document's subject matter.
+  mentions:
+    source: Document
+    target: [Person, Organization, Location, Event, Artifact]
+    descriptor: The document refers to this entity (used for every extracted entity).

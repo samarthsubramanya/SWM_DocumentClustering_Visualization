@@ -84,6 +84,7 @@ python scripts/03_cluster.py                 # UMAP + HDBSCAN/k-means/agglomerat
 python scripts/04_explain.py                 # evidence for every doc of the best-NMI run (--run to choose)
 python scripts/05_kg.py                      # LLM triples (30 docs/cluster) -> Neo4j + PageRank labels + GraphML
 python scripts/05_kg.py --all-docs           # optional: every doc (~60 h locally; cached, resumable)
+python scripts/05b_kg_per_run.py --run <run>  # other runs: regroup the loaded graph by their clusters (no LLM, Neo4j untouched)
 python scripts/06_eval.py export             # -> data/eval/bundle (metrics, sampled explanations / triples / labels)
 python scripts/06_eval.py run                # faithfulness + LLM-judge metrics -> eval/reports/phase1-*.{json,md}
 python scripts/06_eval.py --text2cypher      # KGAgent validity + execution accuracy -> eval/reports/

@@ -15,7 +15,7 @@ FastAPI (src/api) -> Base Orchestrator (LangGraph)          + read-only /api/v1/
      ├─ ClusterAgent   "describe the braves cluster" / "why is year in braves?" / "compare the runs"
      ├─ ExplainAgent   "why is doc-3f9a1c2e in its cluster?" -> evidence -> LLM rationale
      ├─ KGAgent        Text2Cypher: question -> Cypher -> validate (EXPLAIN) -> repair -> read-only Neo4j
-     └─ IngestAgent    (optional, not implemented) new article -> assign or flag emerging
+     └─ IngestAgent    "add this article: …" -> place it in a cluster (15-nearest-neighbor vote) or flag it as emerging
      │
      ▼
 pipeline/  core library (pure Python; every stage caches its output)
@@ -77,6 +77,7 @@ pytest                      # 34 tests, no database or LLM needed
   - **ASU RC:** `LLM_PROVIDER=openai`, `LLM_MODEL=qwen3-30b-a3b`, `LLM_API_KEY=…`, and `LLM_MAX_TOKENS=8192` (it is a thinking model).
   - **Local Ollama:** `LLM_PROVIDER=ollama`, `OLLAMA_MODEL=llama3.1:8b`.
 - **Run:** `SWM_RUN_ID` pins the run used by steps 4–5, the dashboards' default and the agents.
+  `SWM_INGEST_RUN_ID` picks the run that the ingest agent places new posts into (default: `SWM_RUN_ID`).
 - **Certificates:** if Python cannot verify Aura's certificate (`CERTIFICATE_VERIFY_FAILED`), add
   `SSL_CERT_FILE=<path printed by python -m certifi>`.
 
@@ -106,6 +107,7 @@ python scripts/06_eval.py text2cypher                         # Text2Cypher vali
 python scripts/06_eval.py text2cypher --questions eval/text2cypher_heldout.yaml
 python scripts/07_human_eval.py make --raters samarth mohak asmi pratik   # rating sheets in eval/human/
 python scripts/07_human_eval.py score                         # -> EVALUATIONS/human_ratings/
+python scripts/08_stream.py --run all-mpnet-base-v2__agglomerative   # dynamic ingestion of the test posts -> EVALUATIONS/dynamic/
 ```
 
 ### 5. Run the dashboards

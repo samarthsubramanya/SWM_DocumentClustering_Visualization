@@ -1,0 +1,88 @@
+{
+  "run_id": "all-mpnet-base-v2__agglomerative",
+  "model": "all-mpnet-base-v2",
+  "k": 20,
+  "train_posts": 10305,
+  "posts": 6785,
+  "created": "2026-11-20 17:10:43",
+  "run_nmi": 0.6539434239761801,
+  "quality": {
+    "nmi": 0.6032855598380633,
+    "ari": 0.46496082555856616,
+    "purity": 0.6035372144436256
+  },
+  "batch": {
+    "agreement": 0.7669859985261607,
+    "batch_vs_run_on_train": 0.8477438136826783
+  },
+  "latency": {
+    "posts": 200,
+    "p50_s": 0.022916770496522076,
+    "p95_s": 0.09915988539141835,
+    "max_s": 0.27655241699540056
+  },
+  "threshold": 0.17962323129177094,
+  "emerging_share": 0.03537214443625645,
+  "encode_check": {
+    "posts": 100,
+    "min_cosine": 0.9999998807907104
+  },
+  "emerging_examples": [
+    {
+      "post": "doc-fd65f089",
+      "cluster_id": 18,
+      "similarity": 0.0346,
+      "newsgroup": "sci.med",
+      "opening": "I was just wondering if exercises specific to particular regions of the body (such as thig"
+    },
+    {
+      "post": "doc-50c7c1e4",
+      "cluster_id": 8,
+      "similarity": 0.041,
+      "newsgroup": "sci.med",
+      "opening": "Do you swim nude in a public swimming pool? :) I doubt sperm can penetrate swimsuit materi"
+    },
+    {
+      "post": "doc-1c40b4b5",
+      "cluster_id": 1,
+      "similarity": 0.0442,
+      "newsgroup": "sci.electronics",
+      "opening": "<lots of stuff deleted> Might depend on where you live .. I know locally, for most of the "
+    },
+    {
+      "post": "doc-a2ab0192",
+      "cluster_id": 3,
+      "similarity": 0.0462,
+      "newsgroup": "alt.atheism",
+      "opening": "Yes, unless the observer is at rest with respect to the singularity at infinite distance a"
+    },
+    {
+      "post": "doc-959550f6",
+      "cluster_id": 2,
+      "similarity": 0.0576,
+      "newsgroup": "sci.med",
+      "opening": "When I have trouble it's usually because of water trapped by some remaining wax. I don't s"
+    },
+    {
+      "post": "doc-d1cc4cc1",
+      "cluster_id": 17,
+      "similarity": 0.0601,
+      "newsgroup": "sci.electronics",
+      "opening": "I hope David isn't going to be too upset with me for sticking my nose in here again, but h"
+    },
+    {
+      "post": "doc-764e1680",
+      "cluster_id": 11,
+      "similarity": 0.0612,
+      "newsgroup": "sci.med",
+      "opening": "There are two different mechanisms here: toning of muscles and reduction of fat. Exercises"
+    },
+    {
+      "post": "doc-65d2d4a7",
+      "cluster_id": 19,
+      "similarity": 0.0624,
+      "newsgroup": "sci.space",
+      "opening": "Well, there are several bursts in species diversity I can think of. The Cambrian and Ordov"
+    }
+  ]
+}

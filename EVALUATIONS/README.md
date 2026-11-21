@@ -10,6 +10,7 @@ new reports into these same folders. The headline numbers are below, and each fi
 | `knowledge_graph/` | KG extraction quality per LLM (Qwen3-30B vs Llama 4 Scout) | `scripts/05_kg.py --extract-only` |
 | `text2cypher/` | Natural-language to Cypher: validity before and after repair, execution accuracy | `scripts/06_eval.py text2cypher` |
 | `human_ratings/` | Team ratings of explanations, cluster labels and triples | `scripts/07_human_eval.py score` |
+| `dynamic/` | Dynamic ingestion: test posts streamed into a run clustered on the train posts | `scripts/08_stream.py` |
 
 ## Headline results
 
@@ -54,6 +55,17 @@ by people in `human_ratings/`. `phase1-20261108-150947` is an intermediate run o
 | **New prompt, main set (cloud graph)** | **100%** | **100%** | **1.000 (14/14)** |
 | Old prompt, held-out set | 100% | 100% | 0.778 (7/9) |
 | **New prompt, held-out set** | **100%** | **100%** | **1.000 (9/9)** |
+
+**Dynamic ingestion** (`dynamic/`, 6,785 test posts streamed into `all-mpnet-base-v2__agglomerative`, clustered on 10,305 train posts)
+
+| Placement | Agreement with batch | NMI vs newsgroups | Latency p95 | Emerging |
+|---|---|---|---|---|
+| Nearest cluster center | 0.767 | 0.603 | 0.099 s | 3.5% |
+| **15-nearest-neighbor vote (used)** | **0.829** | **0.621** | **0.033 s** | 3.5% |
+
+The target is agreement ≥ 0.85 and p95 < 3 s. The batch reference re-clusters train and test together and
+reproduces the stored run on the train posts only 0.848 of the time, so 0.829 is close to the attainable
+ceiling. The run itself scores NMI 0.654 on the train posts.
 
 `text2cypher/text2cypher-20261115-121500-prompt-ab.md` explains the old-vs-new comparison. The
 held-out questions were never used to tune the prompt. The samples are small, so read 9/9 as

@@ -1,0 +1,88 @@
+{
+  "run_id": "all-mpnet-base-v2__agglomerative",
+  "model": "all-mpnet-base-v2",
+  "k": 20,
+  "train_posts": 10305,
+  "posts": 6785,
+  "created": "2026-11-20 17:20:19",
+  "run_nmi": 0.6539434239761801,
+  "quality": {
+    "nmi": 0.6212840716104349,
+    "ari": 0.4669428368201559,
+    "purity": 0.6056005895357406
+  },
+  "batch": {
+    "agreement": 0.8291820191599115,
+    "batch_vs_run_on_train": 0.8477438136826783
+  },
+  "latency": {
+    "posts": 200,
+    "p50_s": 0.0214949999935925,
+    "p95_s": 0.03923092679615364,
+    "max_s": 0.06459658397943713
+  },
+  "threshold": 0.17962323129177094,
+  "emerging_share": 0.03537214443625645,
+  "encode_check": {
+    "posts": 100,
+    "min_cosine": 0.9999998807907104
+  },
+  "emerging_examples": [
+    {
+      "post": "doc-06d70d1a",
+      "cluster_id": 1,
+      "similarity": -0.0391,
+      "newsgroup": "sci.space",
+      "opening": "Yes, weightlessness does feel like falling. It may feel strange at first, but the body doe"
+    },
+    {
+      "post": "doc-23cd4b1c",
+      "cluster_id": 2,
+      "similarity": -0.0288,
+      "newsgroup": "comp.sys.mac.hardware",
+      "opening": "I vote for turning them off at night. THe stress of off/on is a little harmful, so don't t"
+    },
+    {
+      "post": "doc-76eda639",
+      "cluster_id": 1,
+      "similarity": -0.0185,
+      "newsgroup": "sci.med",
+      "opening": "The best thing to do is leave it, it will work its own way out to the surface. Anything yo"
+    },
+    {
+      "post": "doc-46c358ab",
+      "cluster_id": 3,
+      "similarity": -0.0177,
+      "newsgroup": "comp.graphics",
+      "opening": "A map of Italy showing the states/provinces(?) is in the FreeHand 3.1 for Windows clip art"
+    },
+    {
+      "post": "doc-43cadbba",
+      "cluster_id": 15,
+      "similarity": -0.0173,
+      "newsgroup": "sci.med",
+      "opening": "I think I can explain the \"missing part of a leaf\" story. I have actually seen a reproduct"
+    },
+    {
+      "post": "doc-3abf6a95",
+      "cluster_id": 15,
+      "similarity": -0.0161,
+      "newsgroup": "sci.electronics",
+      "opening": "You can design for ramp shutoff, brick-wall current limit or even fold-back cutoff....soun"
+    },
+    {
+      "post": "doc-9201fd06",
+      "cluster_id": 1,
+      "similarity": -0.0107,
+      "newsgroup": "sci.electronics",
+      "opening": "What I usually use...and this stuff is only good on glass....is either Acetone, or a littl"
+    },
+    {
+      "post": "doc-a9eb9c1d",
+      "cluster_id": 1,
+      "similarity": -0.0076,
+      "newsgroup": "sci.electronics",
+      "opening": "If you want to try a non-toxic solvent, there's one made of citrus that works very well an"
+    }
+  ]
+}

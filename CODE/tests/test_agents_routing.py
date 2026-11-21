@@ -1,4 +1,4 @@
-"""Base-agent graph routes to the (still stubbed) ingest agent end-to-end (LLM mocked, no Ollama needed)."""
+"""Base-agent graph routes to the ingest agent end-to-end (LLM mocked; no Ollama or database needed)."""
 
 import asyncio
 import importlib
@@ -9,7 +9,7 @@ from src.agents.base.base_agent import graph as _graph  # noqa: F401
 orch = importlib.import_module("src.agents.base.base_agent.nodes.orchestrator_node")
 
 
-def test_routes_to_ingest_stub(monkeypatch):
+def test_routes_to_ingest_agent(monkeypatch):
     class FakeStructured:
         async def ainvoke(self, _):
             return orch.RoutingDecision(intent="add article", selected_agent="ingest", confidence=0.9)
@@ -22,4 +22,4 @@ def test_routes_to_ingest_stub(monkeypatch):
     )
     assert result["status"] == "SUCCESS"
     assert result["execution"]["selected_agent"] == "ingest"
-    assert "not implemented" in result["final_response"]
+    assert "Paste the article" in result["final_response"]   # no article text: it asks for one

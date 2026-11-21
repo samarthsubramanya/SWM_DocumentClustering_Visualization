@@ -127,7 +127,8 @@ def _why_term(run_id: str, clusters: dict[int, dict], cluster_id: int, term: str
                      "knowledge graph.")
     elif term == label_term:
         lines.append("- It is in the cluster label as the top term, in parentheses after the KG entities.")
-    lines.append(f"- {inside:.0%} of this cluster's {info['size']} posts contain it, against {outside:.0%} "
+    share = lambda x: f"{x:.0%}" if x >= 0.01 or x == 0 else f"{x:.1%}"   # 0.004 -> "0.4%", not "0%"
+    lines.append(f"- {share(inside)} of this cluster's {info['size']} posts contain it, against {share(outside)} "
                  "of posts in other clusters"
                  + (f" ({inside / outside:.1f}× as often)." if outside and inside > outside else "."))
     if term not in ranks and term not in entities:

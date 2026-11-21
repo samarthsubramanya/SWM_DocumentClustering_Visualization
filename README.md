@@ -21,6 +21,8 @@ can be checked:
 - **Questions in plain English.** Agents answer questions about clusters, posts and the graph.
   Graph questions become Cypher, which is validated, repaired if needed and run read-only.
   Its accuracy is measured against hand-written gold queries.
+- **New posts as they arrive.** A new post joins the cluster its nearest posts vote for, with the
+  same evidence, or is flagged as *emerging* when no cluster fits.
 
 ## Repository structure
 
@@ -36,7 +38,7 @@ CODE/            everything that runs (see CODE/README.md for step-by-step instr
   tests/           pytest suite
 DATA/            the 20 Newsgroups corpus (compressed archive) and its description
 EVALUATIONS/     every evaluation output, by topic, with an index of headline results
-  clustering/  phase1/  knowledge_graph/  text2cypher/  human_ratings/
+  clustering/  phase1/  knowledge_graph/  text2cypher/  human_ratings/  dynamic/
 ```
 
 ## Pipeline
@@ -58,6 +60,7 @@ EVALUATIONS/     every evaluation output, by topic, with an index of headline re
 | Explanation faithfulness (cited vs random deletions) | 10.5× more assignment flips (posts nearest their own cluster center; 1.7× over all posts) | ≥ 2× |
 | Text2Cypher (held-out questions) | 100% valid on the first try, execution accuracy 9/9 | ≥ 0.70 |
 | Knowledge-graph ontology conformance | 0.824 | ≥ 0.95 |
+| Dynamic ingestion (6,785 unseen test posts) | agreement with batch 0.829, p95 0.033 s per post | ≥ 0.85, < 3 s |
 
 Details, every report and the remaining human ratings are in [`EVALUATIONS/`](EVALUATIONS/README.md).
 

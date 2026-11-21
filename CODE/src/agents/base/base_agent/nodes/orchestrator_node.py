@@ -94,13 +94,17 @@ Available agents:
    Questions about named entities (people, organizations, locations, events,
    artifacts, topics) or their relations, answered from the knowledge graph
    (Neo4j). Use kg whenever the question asks for entities, even if it is
-   scoped to a cluster.
+   scoped to a cluster, and for any question about the knowledge graph
+   itself: how many documents, entities or relationships it holds, or which
+   documents mention something.
    Examples: "which organizations appear in clusters 3 and 7?",
-   "most mentioned locations in cluster 15", "who is affiliated with NASA?"
+   "most mentioned locations in cluster 15", "who is affiliated with NASA?",
+   "how many documents are in the knowledge graph?", "how many documents mention israel?"
 
 4. ingest
-   Add a new article (pasted text or RSS) and assign it to a cluster
-   or flag it as emerging.
+   Add a new article (pasted text) and assign it to a cluster or flag it
+   as emerging. The request contains the article itself.
+   Examples: "add this article: <text>", "where does this post belong? <text>"
 
 5. none
    Use when no available agent is suitable for the request.

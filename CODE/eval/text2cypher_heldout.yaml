@@ -1,0 +1,73 @@
+# Second, held-out question set for the KGAgent (Text2Cypher).
+#
+# eval/text2cypher.yaml was used to diagnose and fix the prompt (Nov 2026), so its score is no
+# longer an unbiased estimate. These questions were written after that fix and must not be used
+# to tune the prompt: run them once and report the result next to the original set.
+#
+#   python scripts/06_eval.py text2cypher --questions eval/text2cypher_heldout.yaml
+#
+# Same scoring and rules as eval/text2cypher.yaml. The gold queries were written without access to
+# the graph: a question whose gold returns no rows or more than 50 is excluded by the script and
+# should be replaced (listed under "excluded" in the report).
+
+questions:
+  - id: h01
+    pattern: count
+    question: How many organizations does the knowledge graph contain?
+    gold: >-
+      MATCH (o:Organization) RETURN count(o)
+
+  - id: h02
+    pattern: count
+    question: How many produces relationships are in the graph?
+    gold: >-
+      MATCH ()-[r:produces]->() RETURN count(r)
+
+  - id: h03
+    pattern: cluster-count
+    question: How many distinct locations do the documents of cluster 2 mention?
+    gold: >-
+      MATCH (:Document {cluster_id: 2})-[:mentions]->(l:Location) RETURN count(DISTINCT l)
+
+  - id: h04
+    pattern: cluster-count
+    question: How many documents in cluster 11 mention at least one event?
+    gold: >-
+      MATCH (d:Document {cluster_id: 11})-[:mentions]->(:Event) RETURN count(DISTINCT d)
+
+  - id: h05
+    pattern: cluster-list
+    question: List the events mentioned in cluster 3.
+    gold: >-
+      MATCH (:Document {cluster_id: 3})-[:mentions]->(e:Event) RETURN DISTINCT e.name
+
+  - id: h06
+    pattern: entity-lookup
+    question: In which clusters is the fbi mentioned?
+    gold: >-
+      MATCH (d:Document)-[:mentions]->(e) WHERE e.name = 'fbi' RETURN DISTINCT d.cluster_id
+
+  - id: h07
+    pattern: entity-lookup
+    question: How many documents mention microsoft?
+    gold: >-
+      MATCH (d:Document)-[:mentions]->(e) WHERE e.name = 'microsoft' RETURN count(DISTINCT d)
+
+  - id: h08
+    pattern: cross-cluster
+    question: How many organizations are mentioned in more than three clusters?
+    gold: >-
+      MATCH (d:Document)-[:mentions]->(o:Organization) WITH o, count(DISTINCT d.cluster_id) AS clusters
+      WHERE clusters > 3 RETURN count(o)
+
+  - id: h09
+    pattern: relation
+    question: Who is affiliated with nasa?
+    gold: >-
+      MATCH (p:Person)-[:affiliatedWith]->(:Organization {name: 'nasa'}) RETURN p.name
+
+  - id: h10
+    pattern: relation
+    question: How many people are affiliated with at least one organization?
+    gold: >-
+      MATCH (p:Person)-[:affiliatedWith]->(:Organization) RETURN count(DISTINCT p)

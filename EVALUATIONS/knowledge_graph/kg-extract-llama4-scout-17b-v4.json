@@ -1,0 +1,20 @@
+{
+  "model_cache": "llama4-scout-17b-v4",
+  "run_id": "bge-base-en-v1.5__agglomerative",
+  "docs": 576,
+  "stats": {
+    "entities": 5028,
+    "relations": 1911,
+    "rejected": 1344,
+    "rejected_by_reason": {
+      "relation: endpoint not a kept entity": 805,
+      "relation: wrong source/target type": 500,
+      "entity: stop word / pronoun": 25,
+      "entity: empty or over-long name": 10,
+      "entity: type not in ontology": 2,
+      "relation: not in ontology": 2
+    }
+  },
+  "ontology_conformance": 0.8377399492937342,
+  "entities_after_normalize": 5010
+}

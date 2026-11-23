@@ -1,76 +1,73 @@
 # Explainable News Clustering with Ontology-Anchored Knowledge Graphs
 
-CSE 573 Semantic Web Mining — implementation repo. 
+CSE 573 Semantic Web Mining · Fall 2026 · Group 17, Project 9
 
-## Implementation goals
+Samarth Agasthya Mandya Subramanya · Mohak Narendrakumar Rathod · Asmi Umesh Pulgam · Pratik Chaudhari
 
-1. **Foundation (required).** Cluster the 20 Newsgroups corpus, explain *why* each
-   document lands in its cluster with checkable evidence (not just a keyword list),
-   and overlay an ontology-anchored knowledge graph per cluster, all through a
-   linked Streamlit dashboard and a set of harness agents.
-2. **Optional A — Dynamic ingestion.** Assign new articles (pasted text or RSS) to
-   an existing cluster or flag them as emerging, with the same explanation.
-3. **Optional B — PubMed adaptation.** Re-run the unchanged pipeline on PubMed
-   abstracts by swapping only the ingest loader and the ontology file.
+## Aim
 
-## Architecture (overview)
+Clustering shows *what* is grouped together, but not *why* a document belongs to its group. This
+project clusters the 20 Newsgroups posts and then explains every assignment with evidence that
+can be checked:
+
+- **Evidence first, LLM last.** For each post we compute the evidence: the cluster's top terms
+  found in the post, its margin over the closest competing cluster, its nearest posts, and the
+  knowledge-graph entities it names. An LLM then only puts that evidence into words, and must quote it.
+- **Faithfulness is tested, not assumed.** Deleting the terms an explanation cites should change
+  assignments far more than deleting random words. It does: 10.5× as many flips among posts
+  nearest their own cluster center (1.7× over all posts).
+- **An ontology-anchored knowledge graph per cluster.** An LLM extracts typed entities and
+  relations under a fixed ontology into Neo4j. PageRank over each cluster's graph names the cluster.
+- **Questions in plain English.** Agents answer questions about clusters, posts and the graph.
+  Graph questions become Cypher, which is validated, repaired if needed and run read-only.
+  Its accuracy is measured against hand-written gold queries.
+
+## Repository structure
 
 ```
-Streamlit UI ── linked views: UMAP scatter | cluster panel | KG subgraph (PyVis) | explanation card | chat
-     │ HTTP
-     ▼
-FastAPI -> Base Orchestrator (LangGraph)
-     │
-     ├─ ClusterAgent   "show cluster 3" / "compare HDBSCAN vs k-means"
-     ├─ ExplainAgent   "why is doc 42 in cluster 3?" -> evidence -> LLM rationale
-     ├─ KGAgent        Text2Cypher: NL question -> Cypher -> Neo4j (mirrors Text2SQL)
-     └─ IngestAgent    (Optional A) new article -> embed -> assign or flag emerging
-     │
-     ▼
-swm/  core library (pure Python; every stage caches its output)
-  ingest/     represent/       cluster/           explain/              kg/
-  20NG loader  TF-IDF+LSA       UMAP -> HDBSCAN    c-TF-IDF terms        ontology.yaml
-  PubMed*      SBERT mpnet      k-means, agg.      centroid margin       LLM triple extraction
-  RSS*         BGE-base         NMI/ARI/silhouette exemplars, LLM        normalize -> Neo4j
-                                                    rationale             PageRank labels
-     │
-     ▼
-PostgreSQL (tabular: documents, embeddings, runs, doc_cluster, explanations)
-Neo4j       (graph: ontology entity types as labels, relations as relationship types)
-Ollama      (Llama 3.1 / Qwen 2.5, structured output via pydantic)
+CODE/            everything that runs (see CODE/README.md for step-by-step instructions)
+  pipeline/        core library: ingest, embeddings, clustering, explanations, knowledge graph, evaluation
+  src/             agent harness: LangGraph router, cluster / explain / Text2Cypher agents, FastAPI
+  scripts/         pipeline stages 01_ingest … 07_human_eval
+  ui/              Streamlit dashboard
+  web/             Vue 3 + Material 3 dashboard
+  ontology/        news.yaml: entity and relation types
+  eval/            gold Text2Cypher questions
+  tests/           pytest suite
+DATA/            the 20 Newsgroups corpus (compressed archive) and its description
+EVALUATIONS/     every evaluation output, by topic, with an index of headline results
+  clustering/  phase1/  knowledge_graph/  text2cypher/  human_ratings/
 ```
 
-Three rules drive every design choice here:
+## Pipeline
 
-- **Cached artifacts between stages.** Embeddings are `.npy` files; cluster runs
-  and explanations live in Postgres. Re-running a stage never recomputes its
-  upstream, and the demo never depends on a live model call for the static views.
-- **Evidence-first explanations.** The LLM only verbalizes structured evidence
-  (cluster keywords present, centroid margin, nearest exemplars, KG entities) —
-  it cannot invent evidence. This is what makes the faithfulness test meaningful.
-- **Ontology as config, not code.** `ontology/news.yaml` compiles directly into
-  the Neo4j schema (labels, relationship types, constraints). Optional B is a
-  file swap, not a rewrite.
+```
+20 Newsgroups ─► clean ─► embed (TF-IDF+LSA · mpnet · BGE) ─► UMAP ─► cluster (k-means · agglomerative · HDBSCAN)
+                                                                          │
+              per-post evidence (terms, margin, nearest posts) ◄──────────┤
+              LLM triple extraction ─► ontology check ─► Neo4j ─► PageRank cluster labels
+                                                                          │
+              dashboards (map · cluster panel · KG view · explanation card) + agents (chat, Text2Cypher)
+```
 
+## Headline results
 
-## Getting started
+| Component | Result | Target |
+|---|---|---|
+| Clustering (BGE + agglomerative, 17,090 posts) | NMI 0.663 | ≥ 0.55 |
+| Explanation faithfulness (cited vs random deletions) | 10.5× more assignment flips (posts nearest their own cluster center; 1.7× over all posts) | ≥ 2× |
+| Text2Cypher (held-out questions) | 100% valid on the first try, execution accuracy 9/9 | ≥ 0.70 |
+| Knowledge-graph ontology conformance | 0.824 | ≥ 0.95 |
+
+Details, every report and the remaining human ratings are in [`EVALUATIONS/`](EVALUATIONS/README.md).
+
+## Quick start
 
 ```bash
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env        # fill in Ollama endpoint (college cloud / supercomputer)
-docker compose up -d        # postgres + neo4j (+ local ollama, optional)
-pytest                      # smoke test: ontology.yaml parses
+cd CODE
+python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+cp .env.example .env                 # database and LLM settings
+python scripts/01_ingest.py --archive ../DATA/20newsgroups/20news-bydate.tar.gz
 ```
 
-## Layout
-
-```
-swm/            core library — ingest, represent, cluster, explain, kg
-src/agents/     harness agent wrappers around swm/
-scripts/        01_ingest -> 02_embed -> 03_cluster -> 04_explain -> 05_kg -> 06_eval
-ontology/       news.yaml (foundation); medical.yaml added for Optional B
-ui/             Streamlit dashboard (extends the course harness's ui/)
-data/cache/     .npy embedding cache (gitignored)
-```
-
+The rest of the pipeline, the evaluations and the dashboards are in [`CODE/README.md`](CODE/README.md).

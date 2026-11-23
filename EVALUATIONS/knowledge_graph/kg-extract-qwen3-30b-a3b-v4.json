@@ -1,0 +1,21 @@
+{
+  "model_cache": "qwen3-30b-a3b-v4",
+  "run_id": "bge-base-en-v1.5__agglomerative",
+  "docs": 576,
+  "stats": {
+    "entities": 7050,
+    "relations": 3437,
+    "rejected": 2236,
+    "failed_docs": 23,
+    "rejected_by_reason": {
+      "relation: wrong source/target type": 1385,
+      "relation: endpoint not a kept entity": 796,
+      "entity: empty or over-long name": 28,
+      "entity: stop word / pronoun": 25,
+      "entity: type not in ontology": 1,
+      "relation: not in ontology": 1
+    }
+  },
+  "ontology_conformance": 0.8242552857030575,
+  "entities_after_normalize": 6991
+}
